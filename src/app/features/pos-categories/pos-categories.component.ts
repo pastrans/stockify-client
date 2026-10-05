@@ -22,6 +22,9 @@ export class PosCategoriesComponent implements OnInit {
 
   readonly odooColors = ODOO_COLORS;
 
+  // Incremento de los botones +/- para dejar huecos entre secuencias
+  readonly SEQUENCE_STEP = 5;
+
   // Estados Reactivos con Signals
   categories = signal<PosCategory[]>([]);
   allCategories = signal<PosCategory[]>([]);
@@ -120,6 +123,14 @@ export class PosCategoriesComponent implements OnInit {
 
   selectColor(index: number): void {
     this.categoryForm.patchValue({ color: index });
+  }
+
+  adjustSequence(delta: number): void {
+    const control = this.categoryForm.get('sequence');
+    const current = Number(control?.value) || 0;
+    // Nunca por debajo de 0
+    control?.setValue(Math.max(0, current + delta));
+    control?.markAsTouched();
   }
 
   openModal(content: TemplateRef<unknown>, category?: PosCategory): void {
