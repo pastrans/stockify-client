@@ -32,13 +32,29 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     children: [
       {
+        path: 'products',
+        loadComponent: () => import('./features/products/products.component').then(m => m.ProductsComponent)
+      },
+      {
+        path: 'attributes',
+        loadComponent: () => import('./features/attributes/attributes.component').then(m => m.AttributesComponent)
+      },
+      {
+        path: 'pos-categories',
+        loadComponent: () => import('./features/pos-categories/pos-categories.component').then(m => m.PosCategoriesComponent)
+      },
+      {
+        path: 'inventory',
+        loadComponent: () => import('./features/inventory/inventory.component').then(m => m.InventoryComponent)
+      },
+      {
         path: 'users',
         loadComponent: () => import('./features/users/users.component').then(m => m.UsersComponent)
       },
       // Redirección por defecto
       {
         path: '',
-        redirectTo: 'users',
+        redirectTo: 'products',
         pathMatch: 'full'
       }
     ]

@@ -1,0 +1,269 @@
+<div class="container mt-4" data-bs-theme="dark">
+  <!-- Encabezado y Acciones -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Categorías POS</h2>
+      <p class="text-secondary small mb-0">Jerarquía de categorías del Punto de Venta sincronizable con Odoo</p>
+    </div>
+    <button class="btn btn-primary d-flex align-items-center gap-2" (click)="openModal(categoryModal)">
+      <i class="bi bi-plus-circle-fill"></i> Nueva Categoría
+    </button>
+  </div>
+
+  <!-- Alerta de Error -->
+  @if (errorMessage()) {
+    <div class="alert alert-danger alert-dismissible fade show small" role="alert">
+      <i class="bi bi-exclamation-octagon me-1"></i> {{ errorMessage() }}
+      <button type="button" class="btn-close" (click)="errorMessage.set(null)" aria-label="Close"></button>
+    </div>
+  }
+
+  <!-- Filtro por Estado -->
+  <div class="card border-secondary shadow-sm mb-3 bg-dark-subtle">
+    <div class="card-body py-2 d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <span class="small fw-semibold text-secondary">Filtrar por estado:</span>
+      <div class="btn-group btn-group-sm" role="group">
+        <button
+          type="button"
+          class="btn"
+          [class.btn-light]="statusFilter() === 'all'"
+          [class.btn-outline-secondary]="statusFilter() !== 'all'"
+          (click)="setStatusFilter('all')"
+        >
+          Todos
+        </button>
+        <button
+          type="button"
+          class="btn"
+          [class.btn-success]="statusFilter() === 'active'"
+          [class.btn-outline-secondary]="statusFilter() !== 'active'"
+          (click)="setStatusFilter('active')"
+        >
+          <i class="bi bi-check-circle me-1"></i> Habilitados
+        </button>
+        <button
+          type="button"
+          class="btn"
+          [class.btn-secondary]="statusFilter() === 'inactive'"
+          [class.btn-outline-secondary]="statusFilter() !== 'inactive'"
+          (click)="setStatusFilter('inactive')"
+        >
+          <i class="bi bi-slash-circle me-1"></i> Inhabilitados
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de Categorías -->
+  <div class="card shadow-sm border-secondary bg-dark-subtle">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 table-dark">
+        <thead>
+          <tr>
+            <th scope="col" style="width: 80px;">ID</th>
+            <th scope="col">Nombre</th>
+            <th scope="col">Categoría Padre</th>
+            <th scope="col" style="width: 160px;">Color</th>
+            <th scope="col" style="width: 110px;">Secuencia</th>
+            <th scope="col" style="width: 140px;">Estado</th>
+            <th scope="col" class="text-end" style="width: 120px;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (isLoading()) {
+            <tr>
+              <td colspan="7" class="text-center py-5 text-secondary">
+                <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                Cargando categorías...
+              </td>
+            </tr>
+          } @else {
+            @for (category of filteredCategories(); track category.id) {
+              <tr>
+                <th scope="row" class="text-secondary">#{{ category.id }}</th>
+                <td class="fw-semibold">{{ category.name }}</td>
+                <td>
+                  @if (getParentName(category.parentId); as parentName) {
+                    <i class="bi bi-diagram-2 text-secondary me-1"></i> {{ parentName }}
+                  } @else {
+                    <span class="text-secondary small">— Raíz —</span>
+                  }
+                </td>
+                <td>
+                  <span class="d-inline-flex align-items-center gap-2 small">
+                    <span
+                      class="color-dot"
+                      [class.color-dot-empty]="!getColor(category.color).hex"
+                      [style.background-color]="getColor(category.color).hex"
+                    ></span>
+                    {{ getColor(category.color).name }}
+                  </span>
+                </td>
+                <td>{{ category.sequence }}</td>
+                <td>
+                  @if (category.available) {
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                      <i class="bi bi-dot"></i> Activo
+                    </span>
+                  } @else {
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+                      <i class="bi bi-dot"></i> Inactivo
+                    </span>
+                  }
+                </td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-outline-warning me-2" title="Editar" (click)="openModal(categoryModal, category)">
+                    <i class="bi bi-pencil-fill"></i>
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-danger"
+                    [title]="category.isDeletable ? 'Eliminar' : 'Tiene subcategorías o productos vinculados'"
+                    [disabled]="!category.isDeletable || !category.available"
+                    (click)="deleteCategory(category)"
+                  >
+                    <i class="bi bi-trash-fill"></i>
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="text-center text-secondary py-5">
+                  <i class="bi bi-grid display-6 d-block mb-2"></i>
+                  No se encontraron categorías registradas.
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginación Footer -->
+    @if (totalRecords() > pageSize()) {
+      <div class="card-footer bg-dark border-secondary d-flex justify-content-between align-items-center py-3">
+        <span class="small text-secondary">
+          Total: <strong>{{ totalRecords() }}</strong> registros
+        </span>
+        <ngb-pagination
+          [collectionSize]="totalRecords()"
+          [page]="currentPage()"
+          [pageSize]="pageSize()"
+          [maxSize]="5"
+          [rotate]="true"
+          [boundaryLinks]="true"
+          (pageChange)="onPageChange($event)"
+          size="sm"
+          class="mb-0"
+        ></ngb-pagination>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Modal para Crear / Editar -->
+<ng-template #categoryModal let-modal>
+  <div class="modal-header bg-dark text-light border-secondary">
+    <h5 class="modal-title fw-bold">
+      <i class="bi me-2" [ngClass]="isEditMode ? 'bi-pencil-square' : 'bi-plus-circle-fill'"></i>
+      {{ isEditMode ? 'Editar' : 'Nueva' }} Categoría
+    </h5>
+    <button type="button" class="btn-close btn-close-white" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body bg-dark text-light">
+    <form [formGroup]="categoryForm" (ngSubmit)="saveCategory()">
+      <!-- Nombre -->
+      <div class="mb-3">
+        <label for="name" class="form-label small fw-semibold">Nombre</label>
+        <input
+          type="text"
+          id="name"
+          class="form-control"
+          formControlName="name"
+          placeholder="Ej. Calzado"
+          [class.is-invalid]="categoryForm.get('name')?.invalid && categoryForm.get('name')?.touched"
+        >
+        @if (categoryForm.get('name')?.invalid && categoryForm.get('name')?.touched) {
+          <div class="invalid-feedback">
+            El nombre es requerido y debe tener al menos 2 caracteres.
+          </div>
+        }
+      </div>
+
+      <!-- Categoría Padre -->
+      <div class="mb-3">
+        <label for="parentId" class="form-label small fw-semibold">Categoría Padre</label>
+        <select id="parentId" class="form-select" formControlName="parentId">
+          <option [ngValue]="null">— Ninguna (categoría raíz) —</option>
+          @for (option of parentOptions(); track option.id) {
+            <option [ngValue]="option.id">
+              {{ option.name }}{{ option.available ? '' : ' (inactiva)' }}
+            </option>
+          }
+        </select>
+      </div>
+
+      <!-- Secuencia -->
+      <div class="mb-3">
+        <label for="sequence" class="form-label small fw-semibold">Secuencia</label>
+        <input
+          type="number"
+          id="sequence"
+          class="form-control"
+          formControlName="sequence"
+          min="0"
+          [class.is-invalid]="categoryForm.get('sequence')?.invalid && categoryForm.get('sequence')?.touched"
+        >
+        @if (categoryForm.get('sequence')?.invalid && categoryForm.get('sequence')?.touched) {
+          <div class="invalid-feedback">
+            La secuencia es requerida y debe ser un número mayor o igual a 0.
+          </div>
+        }
+      </div>
+
+      <!-- Color Odoo -->
+      <div class="mb-3">
+        <label class="form-label small fw-semibold">
+          Color <span class="text-secondary fw-normal">({{ getColor(categoryForm.get('color')?.value).name }})</span>
+        </label>
+        <div class="d-flex flex-wrap gap-2">
+          @for (color of odooColors; track color.index) {
+            <button
+              type="button"
+              class="color-swatch"
+              [class.selected]="categoryForm.get('color')?.value === color.index"
+              [class.color-dot-empty]="!color.hex"
+              [style.background-color]="color.hex"
+              [title]="color.name"
+              [attr.aria-label]="color.name"
+              (click)="selectColor(color.index)"
+            ></button>
+          }
+        </div>
+      </div>
+
+      <!-- Estado Habilitado / Inhabilitado (en edición) -->
+      @if (isEditMode) {
+        <div class="form-check form-switch mb-3">
+          <input class="form-check-input" type="checkbox" role="switch" id="availableSwitch" formControlName="available">
+          <label class="form-check-label small fw-semibold" for="availableSwitch">
+            Categoría Activa / Habilitada
+          </label>
+        </div>
+      }
+    </form>
+  </div>
+  <div class="modal-footer bg-dark border-secondary">
+    <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">Cancelar</button>
+    <button
+      type="button"
+      class="btn btn-primary d-flex align-items-center gap-2"
+      (click)="saveCategory()"
+      [disabled]="isLoading()"
+    >
+      @if (isLoading()) {
+        <span class="spinner-border spinner-border-sm" role="status"></span>
+      }
+      <span>{{ isEditMode ? 'Actualizar' : 'Guardar' }}</span>
+    </button>
+  </div>
+</ng-template>
