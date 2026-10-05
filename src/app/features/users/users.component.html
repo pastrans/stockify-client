@@ -1,0 +1,250 @@
+<div class="container mt-4" data-bs-theme="dark">
+  <!-- Encabezado y Acciones -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Gestión de Usuarios</h2>
+      <p class="text-secondary small mb-0">Control de acceso y administración de operadores del sistema</p>
+    </div>
+    <button class="btn btn-primary d-flex align-items-center gap-2" (click)="openModal(userModal)">
+      <i class="bi bi-person-plus-fill"></i> Nuevo Usuario
+    </button>
+  </div>
+
+  <!-- Alerta de Error -->
+  @if (errorMessage()) {
+    <div class="alert alert-danger alert-dismissible fade show small" role="alert">
+      <i class="bi bi-exclamation-octagon me-1"></i> {{ errorMessage() }}
+      <button type="button" class="btn-close" (click)="errorMessage.set(null)" aria-label="Close"></button>
+    </div>
+  }
+
+  <!-- Filtro por Estado -->
+  <div class="card border-secondary shadow-sm mb-3 bg-dark-subtle">
+    <div class="card-body py-2 d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <span class="small fw-semibold text-secondary">Filtrar por estado:</span>
+      <div class="btn-group btn-group-sm" role="group">
+        <button 
+          type="button" 
+          class="btn" 
+          [class.btn-light]="statusFilter() === 'all'" 
+          [class.btn-outline-secondary]="statusFilter() !== 'all'"
+          (click)="setStatusFilter('all')"
+        >
+          Todos
+        </button>
+        <button 
+          type="button" 
+          class="btn" 
+          [class.btn-success]="statusFilter() === 'active'" 
+          [class.btn-outline-secondary]="statusFilter() !== 'active'"
+          (click)="setStatusFilter('active')"
+        >
+          <i class="bi bi-check-circle me-1"></i> Habilitados
+        </button>
+        <button 
+          type="button" 
+          class="btn" 
+          [class.btn-secondary]="statusFilter() === 'inactive'" 
+          [class.btn-outline-secondary]="statusFilter() !== 'inactive'"
+          (click)="setStatusFilter('inactive')"
+        >
+          <i class="bi bi-slash-circle me-1"></i> Inhabilitados
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de Usuarios -->
+  <div class="card shadow-sm border-secondary bg-dark-subtle">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 table-dark">
+        <thead>
+          <tr>
+            <th scope="col" style="width: 80px;">ID</th>
+            <th scope="col">Nombre</th>
+            <th scope="col">Correo Electrónico</th>
+            <th scope="col" style="width: 130px;">Rol</th>
+            <th scope="col" style="width: 140px;">Estado</th>
+            <th scope="col" class="text-end" style="width: 120px;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (isLoading()) {
+            <tr>
+              <td colspan="6" class="text-center py-5 text-secondary">
+                <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                Cargando usuarios...
+              </td>
+            </tr>
+          } @else {
+            @for (user of filteredUsers(); track user.id) {
+              <tr>
+                <th scope="row" class="text-secondary">#{{ user.id }}</th>
+                <td class="fw-semibold">{{ user.name }}</td>
+                <td>{{ user.email }}</td>
+                <td>
+                  <span class="badge bg-success">
+                    ADMIN
+                  </span>
+                </td>
+                <td>
+                  @if (user.available) {
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                      <i class="bi bi-dot"></i> Activo
+                    </span>
+                  } @else {
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+                      <i class="bi bi-dot"></i> Inactivo
+                    </span>
+                  }
+                </td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-outline-warning me-2" title="Editar" (click)="openModal(userModal, user)">
+                    <i class="bi bi-pencil-fill"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" title="Eliminar" (click)="deleteUser(user.id)">
+                    <i class="bi bi-trash-fill"></i>
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="text-center text-secondary py-5">
+                  <i class="bi bi-people display-6 d-block mb-2"></i>
+                  No se encontraron usuarios registrados.
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginación Footer -->
+    @if (totalRecords() > pageSize()) {
+      <div class="card-footer bg-dark border-secondary d-flex justify-content-between align-items-center py-3">
+        <span class="small text-secondary">
+          Total: <strong>{{ totalRecords() }}</strong> registros
+        </span>
+        <ngb-pagination
+          [collectionSize]="totalRecords()"
+          [page]="currentPage()"
+          [pageSize]="pageSize()"
+          [maxSize]="5"
+          [rotate]="true"
+          [boundaryLinks]="true"
+          (pageChange)="onPageChange($event)"
+          size="sm"
+          class="mb-0"
+        ></ngb-pagination>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Modal para Crear / Editar -->
+<ng-template #userModal let-modal>
+  <div class="modal-header bg-dark text-light border-secondary">
+    <h5 class="modal-title fw-bold">
+      <i class="bi me-2" [ngClass]="isEditMode ? 'bi-pencil-square' : 'bi-person-plus-fill'"></i>
+      {{ isEditMode ? 'Editar' : 'Nuevo' }} Usuario
+    </h5>
+    <button type="button" class="btn-close btn-close-white" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body bg-dark text-light">
+    @if (userForm) {
+      <form [formGroup]="userForm" (ngSubmit)="saveUser()">
+        <!-- Nombre -->
+        <div class="mb-3">
+          <label for="name" class="form-label small fw-semibold">Nombre Completo</label>
+          <input 
+            type="text" 
+            id="name" 
+            class="form-control" 
+            formControlName="name"
+            placeholder="Ej. John Doe"
+            [class.is-invalid]="userForm.get('name')?.invalid && userForm.get('name')?.touched"
+          >
+          @if (userForm.get('name')?.invalid && userForm.get('name')?.touched) {
+            <div class="invalid-feedback">
+              El nombre es requerido y debe tener al menos 3 caracteres.
+            </div>
+          }
+        </div>
+
+        <!-- Correo Electrónico -->
+        <div class="mb-3">
+          <label for="email" class="form-label small fw-semibold">Correo Electrónico</label>
+          <input 
+            type="email" 
+            id="email" 
+            class="form-control" 
+            formControlName="email"
+            placeholder="correo@ejemplo.com"
+            [class.is-invalid]="userForm.get('email')?.invalid && userForm.get('email')?.touched"
+          >
+          @if (userForm.get('email')?.invalid && userForm.get('email')?.touched) {
+            <div class="invalid-feedback">
+              Ingrese un correo electrónico válido.
+            </div>
+          }
+        </div>
+
+        <!-- Contraseña con Reglas de Validación Fuertes -->
+        <div class="mb-3">
+          <label for="password" class="form-label small fw-semibold text-secondary">
+            Contraseña {{ isEditMode ? '(Opcional)' : '' }}
+          </label>
+          <input 
+            type="password" 
+            id="password" 
+            class="form-control bg-dark text-light border-secondary" 
+            formControlName="password"
+            [placeholder]="isEditMode ? 'Dejar en blanco para conservar la actual' : 'Mínimo 8 caracteres...'"
+            [class.is-invalid]="userForm.get('password')?.invalid && userForm.get('password')?.touched"
+          >
+          
+          @if (userForm.get('password')?.invalid && userForm.get('password')?.touched) {
+            <div class="invalid-feedback d-block">
+              @if (userForm.get('password')?.errors?.['required']) {
+                La contraseña es requerida.
+              } @else if (userForm.get('password')?.errors?.['strongPassword']) {
+                Debe tener min. 8 caracteres, incluir una mayúscula, un número y un carácter especial.
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Rol Fijo (Informativo) -->
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Rol de Usuario</label>
+          <input type="text" class="form-control bg-dark text-secondary border-secondary" value="ADMIN" disabled>
+        </div>
+
+        <!-- Estado Habilitado / Inhabilitado (en edición) -->
+        @if (isEditMode) {
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" role="switch" id="availableSwitch" formControlName="available">
+            <label class="form-check-label small fw-semibold" for="availableSwitch">
+              Usuario Activo / Habilitado
+            </label>
+          </div>
+        }
+      </form>
+    }
+  </div>
+  <div class="modal-footer bg-dark border-secondary">
+    <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">Cancelar</button>
+    <button 
+      type="button" 
+      class="btn btn-primary d-flex align-items-center gap-2" 
+      (click)="saveUser()" 
+      [disabled]="isLoading()"
+    >
+      @if (isLoading()) {
+        <span class="spinner-border spinner-border-sm" role="status"></span>
+      }
+      <span>{{ isEditMode ? 'Actualizar' : 'Guardar' }}</span>
+    </button>
+  </div>
+</ng-template>

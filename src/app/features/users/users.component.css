@@ -1,0 +1,19 @@
+.users-view {
+  width: 100%;
+}
+
+.table-responsive {
+  border-radius: 0.375rem;
+}
+
+.btn-group .btn.active {
+  color: #ffffff !important;
+}
+
+.modal {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
