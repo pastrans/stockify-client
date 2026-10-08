@@ -14,7 +14,7 @@ SPA en Angular para **Stockify**: digitalización de inventario retail (catálog
 ## Convenciones
 
 - Los nombres de carpetas y archivos van en inglés: `features/<feature>/`, `core/services/<x>.service.ts`, `shared/models/<x>.model.ts`.
-- `core/`: guards (`AuthGuard`, `PublicGuard`), `authInterceptor` (Bearer token) y servicios. `shared/`: `main-layout` (menú horizontal superior), modelos y `AppValidators`.
+- `core/`: guards (`AuthGuard`, `PublicGuard`), `authInterceptor` (Bearer token) y servicios. `shared/`: `main-layout` (menú horizontal superior), `sequence-input` (campo de secuencia con botones ±), modelos, `AppValidators` y `utils/api-error.ts`.
 - Estado con Angular Signals (`signal`, `computed`), Reactive Forms e `inject()` en lugar de constructor.
 - Rol fijo `'ADMIN'` en los formularios de usuario. No existe `role.guard`.
 - Las rutas públicas cuelgan de `/auth/*` (`/auth/login`, `/auth/reset-password`). Las redirecciones de sesión van a `/auth/login`, nunca a `/login`.
@@ -33,11 +33,11 @@ SPA en Angular para **Stockify**: digitalización de inventario retail (catálog
 | `products` | CRUD de plantillas; `PATCH /sync` (`productId` o `productIds`); `PATCH /:id/unsync`; variantes: `PUT/DELETE /variants/:variantId`, `PATCH /variants/:variantId/stock` |
 | `uploads` | `POST /image` (multipart, campo de archivo único; `folder` ∈ `products`, `categories`, `users`; S3 con nombre UUID) |
 
-Los errores llegan como `{ status, message }`, con 400 para las reglas de negocio.
+Los errores llegan como `{ error: string }` (mensaje en inglés), con 400 para las reglas de negocio. Se leen con `getApiErrorMessage(err, fallback)` (`shared/utils/api-error.ts`), que también acepta `{ message }` y traduce al español los mensajes de negocio conocidos. Los mensajes nuevos que necesiten traducción se añaden ahí.
 
 ## Reglas de dominio que la UI debe respetar
 
-- **Atributos**: `displayType` ∈ `select | pills | radio | color` (con `color` se exige `colorHex`). `variantCreation` ∈ `instantly | dynamically | never`. `shortName` es único por atributo y se usa en los SKU.
+- **Atributos**: `displayType` ∈ `select | pills | radio | color` (con `color` se exige `colorHex`). `variantCreation` ∈ `instantly | dynamically | never`. `shortName` es único por atributo y se usa en los SKU. Ni `Attribute` ni `AttributeValue` traen `isDeletable`: la UI no sabe de antemano si están en uso, así que las acciones de eliminar o inhabilitar siempre están activas. El backend las rechaza con un 400 cuando el atributo lo usa algún producto activo, y la UI muestra ese error traducido.
 - **Colores de Categorías POS**: `color` guarda el **índice de color de Odoo** (entero 0–11, validado por la API), no un HEX. La UI muestra un selector con la paleta de Odoo y envía el índice:
 
   | Índice | Color Odoo | HEX |
@@ -55,16 +55,19 @@ Los errores llegan como `{ status, message }`, con 400 para las reglas de negoci
   | 10 | Verde | `#30C381` |
   | 11 | Violeta | `#9365B8` |
 
-- **Generación cartesiana**: el SKU sigue la forma `skuPrefix-short1-short2…`, con los atributos ordenados por `Attribute.sequence` ASC. Por defecto barcode = SKU. `displayName` sigue la forma `"Nombre (Valor1, Valor2)"`.
-- **Edición de matriz** (`PUT /products/:id`): las variantes existentes conservan su ID, SKU y stock. Las nuevas nacen con stock 0.
+- **Generación cartesiana**: el SKU sigue la forma `skuPrefix-short1-short2…`, con los atributos ordenados por `ProductTemplateAttributeLine.sequence` ASC (desempate por `attributeId`). Por defecto barcode = SKU. `displayName` sigue la forma `"Nombre (Valor1, Valor2)"`.
+- **Orden de atributos por producto**: `Attribute.sequence` es solo el valor por defecto. Al crear una línea se copia en `ProductTemplateAttributeLine.sequence`, salvo que se envíe `attributeLines[].sequence`. Desde entonces el orden pertenece a la línea: cambiar `Attribute.sequence` no afecta a los productos existentes ni a sus SKU. Las respuestas exponen `attributeLines` (`attributeId`, `attributeName`, `sequence`, `values`) ya ordenadas.
+- **Reordenar atributos** de un producto: en `draft` y `stock_locked` se permite y regenera los SKU (se conservan ID, stock y barcodes personalizados). En `synced` la API responde 400 y hay que hacer `unsync` antes.
+- **Edición de matriz** (`PUT /products/:id`): las variantes existentes conservan su ID, SKU y stock. Las nuevas nacen con stock 0. Una línea sin `sequence` conserva la suya; una nueva toma `Attribute.sequence`.
+- **Colisiones de SKU/barcode** entre productos (p. ej. `POL` + `NEG` frente al prefijo `POL-NEG`): la API las rechaza con 400. No hay sufijos automáticos; el usuario debe cambiar el `skuPrefix`.
 - **Ciclo de vida** (`ProductStatus`):
   - `draft` → `stock_locked` en cuanto alguna variante activa tiene `stockStore + stockWarehouse > 0`.
   - `stock_locked` → `draft` cuando el stock total de las variantes activas vuelve a 0.
   - `PATCH /sync` lleva a `synced` y congela SKUs y barcodes.
   - `PATCH /:id/unsync` (solo uno a la vez) vuelve a `stock_locked` si hay stock y a `draft` si no lo hay.
-  - Cuando el producto está bloqueado (`isLocked`), `skuPrefix` no se puede editar y no se pueden borrar variantes con stock. La UI debe deshabilitar esas acciones, no solo mostrar el error del servidor.
+  - Cuando el producto está bloqueado (`isLocked`: estado distinto de `draft` o con stock), `skuPrefix` no se puede editar, no se pueden añadir ni quitar atributos (sí añadir valores nuevos a los existentes) y no se pueden borrar variantes con stock. La UI debe deshabilitar esas acciones, no solo mostrar el error del servidor.
 
 ## Estado del proyecto
 
-Hecho: base de la SPA, autenticación (login/reset), layout en dark mode y gestión de usuarios.
-Pendiente (EP08): atributos y valores, categorías POS, plantillas de producto con matriz de variantes, conteo físico de stock, subida de imágenes y sincronización/exportación con Odoo.
+Hecho: base de la SPA, autenticación (login/reset), layout en dark mode, gestión de usuarios, categorías POS y atributos con sus valores.
+Pendiente (EP08): plantillas de producto con matriz de variantes, conteo físico de stock, subida de imágenes y sincronización/exportación con Odoo.
