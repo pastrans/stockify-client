@@ -4,11 +4,12 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { NgbModal, NgbModalModule, NgbModalRef, NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
 import { PosCategory, ODOO_COLORS, OdooColor } from '../../shared/models/pos-category.model';
 import { PosCategoryService } from '../../core/services/pos-category.service';
+import { SequenceInputComponent } from '../../shared/components/sequence-input/sequence-input.component';
 
 @Component({
   selector: 'app-pos-categories',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgbModalModule, NgbPaginationModule],
+  imports: [CommonModule, ReactiveFormsModule, NgbModalModule, NgbPaginationModule, SequenceInputComponent],
   templateUrl: './pos-categories.component.html',
   styleUrls: ['./pos-categories.component.css']
 })
@@ -21,9 +22,6 @@ export class PosCategoriesComponent implements OnInit {
   private readonly PARENT_OPTIONS_LIMIT = 100;
 
   readonly odooColors = ODOO_COLORS;
-
-  // Incremento de los botones +/- para dejar huecos entre secuencias
-  readonly SEQUENCE_STEP = 5;
 
   // Estados Reactivos con Signals
   categories = signal<PosCategory[]>([]);
@@ -123,14 +121,6 @@ export class PosCategoriesComponent implements OnInit {
 
   selectColor(index: number): void {
     this.categoryForm.patchValue({ color: index });
-  }
-
-  adjustSequence(delta: number): void {
-    const control = this.categoryForm.get('sequence');
-    const current = Number(control?.value) || 0;
-    // Nunca por debajo de 0
-    control?.setValue(Math.max(0, current + delta));
-    control?.markAsTouched();
   }
 
   openModal(content: TemplateRef<unknown>, category?: PosCategory): void {

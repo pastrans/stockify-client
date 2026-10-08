@@ -205,38 +205,17 @@
       <!-- Secuencia -->
       <div class="mb-3">
         <label for="sequence" class="form-label small fw-semibold">Secuencia</label>
-        <div class="input-group has-validation">
-          <button
-            type="button"
-            class="btn btn-outline-secondary"
-            title="Restar {{ SEQUENCE_STEP }}"
-            (click)="adjustSequence(-SEQUENCE_STEP)"
-          >
-            <i class="bi bi-dash-lg"></i>
-          </button>
-          <input
-            type="number"
-            id="sequence"
-            class="form-control text-center"
-            formControlName="sequence"
-            min="0"
-            [class.is-invalid]="categoryForm.get('sequence')?.invalid && categoryForm.get('sequence')?.touched"
-          >
-          <button
-            type="button"
-            class="btn btn-outline-secondary"
-            title="Sumar {{ SEQUENCE_STEP }}"
-            (click)="adjustSequence(SEQUENCE_STEP)"
-          >
-            <i class="bi bi-plus-lg"></i>
-          </button>
+        <app-sequence-input
+          formControlName="sequence"
+          inputId="sequence"
+          [invalid]="!!(categoryForm.get('sequence')?.invalid && categoryForm.get('sequence')?.touched)"
+        >
           @if (categoryForm.get('sequence')?.invalid && categoryForm.get('sequence')?.touched) {
             <div class="invalid-feedback">
               La secuencia es requerida y debe ser un número mayor o igual a 0.
             </div>
           }
-        </div>
-        <div class="form-text small">Los botones suman o restan de {{ SEQUENCE_STEP }} en {{ SEQUENCE_STEP }} para dejar espacio entre categorías.</div>
+        </app-sequence-input>
       </div>
 
       <!-- Color Odoo -->
