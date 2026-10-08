@@ -37,7 +37,20 @@ export const routes: Routes = [
       },
       {
         path: 'attributes',
-        loadComponent: () => import('./features/attributes/attributes.component').then(m => m.AttributesComponent)
+        children: [
+          {
+            path: '',
+            loadComponent: () => import('./features/attributes/attributes.component').then(m => m.AttributesComponent)
+          },
+          {
+            path: 'new',
+            loadComponent: () => import('./features/attributes/attribute-form/attribute-form.component').then(m => m.AttributeFormComponent)
+          },
+          {
+            path: ':id/edit',
+            loadComponent: () => import('./features/attributes/attribute-form/attribute-form.component').then(m => m.AttributeFormComponent)
+          }
+        ]
       },
       {
         path: 'pos-categories',

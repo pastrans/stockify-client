@@ -1,0 +1,323 @@
+<div class="container mt-4" data-bs-theme="dark">
+  <!-- Volver al listado -->
+  <a routerLink="/attributes" class="btn btn-link link-secondary text-decoration-none px-0 mb-3 small">
+    <i class="bi bi-arrow-left me-1"></i> Volver a Atributos
+  </a>
+
+  @if (isLoading()) {
+    <div class="text-center py-5 text-secondary">
+      <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+      Cargando atributo...
+    </div>
+  } @else if (notFound()) {
+    <!-- El atributo solicitado no existe -->
+    <div class="card border-secondary bg-dark-subtle shadow-sm mx-auto text-center p-5" style="max-width: 520px;">
+      <i class="bi bi-search text-warning display-4 mb-3"></i>
+      <h4 class="fw-bold mb-2">El atributo no existe</h4>
+      <p class="text-secondary small mb-4">
+        El atributo que intentas editar no existe o fue eliminado. Consulta la tabla de atributos para ver los registros disponibles.
+      </p>
+      <div>
+        <a routerLink="/attributes" class="btn btn-primary px-4">
+          <i class="bi bi-table me-1"></i> Ver tabla de atributos
+        </a>
+      </div>
+    </div>
+  } @else {
+    <!-- Encabezado -->
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-4">
+      <h2 class="fw-bold mb-0">
+        @if (isEditMode()) {
+          Editar Atributo
+        } @else {
+          Nuevo Atributo
+        }
+      </h2>
+      @if (attribute(); as current) {
+        @if (current.available) {
+          <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+            <i class="bi bi-dot"></i> Activo
+          </span>
+        } @else {
+          <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+            <i class="bi bi-dot"></i> Inactivo
+          </span>
+        }
+      }
+    </div>
+
+    <!-- Alerta de Error -->
+    @if (errorMessage()) {
+      <div class="alert alert-danger alert-dismissible fade show small" role="alert">
+        <i class="bi bi-exclamation-octagon me-1"></i> {{ errorMessage() }}
+        <button type="button" class="btn-close" (click)="errorMessage.set(null)" aria-label="Close"></button>
+      </div>
+    }
+
+    <div class="card shadow-sm border-secondary bg-dark-subtle">
+      <div class="card-body">
+        <!-- METADATOS DEL ATRIBUTO -->
+        <form [formGroup]="attributeForm" (ngSubmit)="saveAttribute()">
+          <div class="row">
+            <!-- Nombre -->
+            <div class="col-12 col-md-6 mb-3">
+              <label for="name" class="form-label small fw-semibold">Nombre del Atributo</label>
+              <input
+                type="text"
+                id="name"
+                class="form-control"
+                formControlName="name"
+                placeholder="Ej. Marca, Color, Talla"
+                [class.is-invalid]="isInvalid(attributeForm, 'name')"
+              >
+              @if (isInvalid(attributeForm, 'name')) {
+                <div class="invalid-feedback">El nombre es requerido (mín. 3 caracteres).</div>
+              }
+            </div>
+
+            <!-- Tipo de Despliegue -->
+            <div class="col-12 col-md-6 mb-3">
+              <label for="displayType" class="form-label small fw-semibold">Tipo de Despliegue</label>
+              <select id="displayType" class="form-select" formControlName="displayType">
+                @for (option of displayTypeOptions; track option.value) {
+                  <option [ngValue]="option.value">{{ option.label }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <!-- Secuencia -->
+            <div class="col-12 col-md-6 mb-3">
+              <label for="sequence" class="form-label small fw-semibold">Secuencia</label>
+              <app-sequence-input
+                formControlName="sequence"
+                inputId="sequence"
+                [invalid]="isInvalid(attributeForm, 'sequence')"
+              >
+                @if (isInvalid(attributeForm, 'sequence')) {
+                  <div class="invalid-feedback">
+                    La secuencia es requerida y debe ser un número mayor o igual a 0.
+                  </div>
+                }
+              </app-sequence-input>
+            </div>
+
+            <!-- Creación de Variantes -->
+            <div class="col-12 col-md-6 mb-3">
+              <label class="form-label small fw-semibold d-block">Creación de Variantes en Odoo</label>
+              <div class="d-flex flex-wrap gap-3 pt-md-2">
+                @for (option of variantCreationOptions; track option.value) {
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      formControlName="variantCreation"
+                      [id]="'variant-' + option.value"
+                      [value]="option.value"
+                    >
+                    <label class="form-check-label" [for]="'variant-' + option.value">{{ option.label }}</label>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Estado Habilitado / Inhabilitado (en edición) -->
+          @if (isEditMode()) {
+            <div class="form-check form-switch mb-3">
+              <input class="form-check-input" type="checkbox" role="switch" id="availableSwitch" formControlName="available">
+              <label class="form-check-label small fw-semibold" for="availableSwitch">
+                Atributo Activo / Habilitado
+              </label>
+            </div>
+          }
+        </form>
+
+        <!-- VALORES DEL ATRIBUTO -->
+        <div id="values" class="bg-body-tertiary p-3 rounded border border-secondary-subtle mt-2">
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-3 gap-2">
+            <div>
+              <h6 class="mb-0 fw-semibold">Valores de Atributo</h6>
+              @if (isEditMode()) {
+                <span class="form-text small">Cada valor se guarda, agrega o elimina al instante.</span>
+              }
+            </div>
+            @if (!isEditMode()) {
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="addValueRow()">
+                <i class="bi bi-plus-lg me-1"></i> Agregar Valor
+              </button>
+            }
+          </div>
+
+          @if (isEditMode()) {
+            <!-- Edición: cada fila es un valor guardado -->
+            @for (group of valuesArray.controls; track group.value.id; let i = $index) {
+              <form [formGroup]="group" (ngSubmit)="updateValue(group)" class="row align-items-center mb-3 mb-md-2 gx-2">
+                <div class="col-12 col-md-5 mb-2 mb-md-0">
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    formControlName="valueName"
+                    placeholder="Nombre (Ej. Rojo)"
+                    [class.is-invalid]="isInvalid(group, 'valueName') || isDuplicate(i, 'valueName')"
+                  >
+                </div>
+                <div class="col-12 col-md-3 mb-2 mb-md-0">
+                  <input
+                    type="text"
+                    class="form-control form-control-sm text-uppercase"
+                    formControlName="shortName"
+                    placeholder="Código SKU (Ej. RO)"
+                    [attr.maxlength]="SHORT_NAME_MAX"
+                    [class.is-invalid]="isInvalid(group, 'shortName') || isDuplicate(i, 'shortName')"
+                  >
+                </div>
+                <div class="col-12 col-md-4 d-flex align-items-center justify-content-between justify-content-md-start gap-2">
+                  @if (isColor()) {
+                    <input
+                      type="color"
+                      class="form-control color-picker-input"
+                      formControlName="colorHex"
+                      title="Elige el color"
+                      [class.border-warning]="!group.value.hasStoredColor"
+                    >
+                    @if (!group.value.hasStoredColor) {
+                      <i class="bi bi-exclamation-triangle text-warning" title="Este valor aún no tiene color guardado"></i>
+                    }
+                  }
+                  <div class="d-flex gap-2 ms-md-auto">
+                    <button
+                      type="submit"
+                      class="btn btn-sm btn-outline-success"
+                      title="Guardar cambios del valor"
+                      [disabled]="!canSaveRow(group) || busyValue() !== null"
+                    >
+                      @if (busyValue() === group.value.id) {
+                        <span class="spinner-border spinner-border-sm" role="status"></span>
+                      } @else {
+                        <i class="bi bi-check-lg"></i>
+                      }
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-danger"
+                      title="Eliminar valor"
+                      [disabled]="busyValue() !== null"
+                      (click)="deleteValue(i)"
+                    >
+                      <i class="bi bi-trash-fill"></i>
+                    </button>
+                  </div>
+                </div>
+              </form>
+            } @empty {
+              <p class="text-secondary small mb-3">Este atributo aún no tiene valores.</p>
+            }
+
+            <!-- Alta de un nuevo valor -->
+            <form [formGroup]="newValueForm" (ngSubmit)="addValue()" class="row align-items-center gx-2 pt-3 mt-2 new-value-row">
+              <div class="col-12 col-md-5 mb-2 mb-md-0">
+                <input
+                  type="text"
+                  class="form-control form-control-sm"
+                  formControlName="valueName"
+                  placeholder="Nuevo valor (Ej. Azul)"
+                  [class.is-invalid]="isInvalid(newValueForm, 'valueName') || isNewValueDuplicate('valueName')"
+                >
+              </div>
+              <div class="col-12 col-md-3 mb-2 mb-md-0">
+                <input
+                  type="text"
+                  class="form-control form-control-sm text-uppercase"
+                  formControlName="shortName"
+                  placeholder="Código SKU (Ej. AZ)"
+                  [attr.maxlength]="SHORT_NAME_MAX"
+                  [class.is-invalid]="isInvalid(newValueForm, 'shortName') || isNewValueDuplicate('shortName')"
+                >
+              </div>
+              <div class="col-12 col-md-4 d-flex align-items-center justify-content-between justify-content-md-start gap-2">
+                @if (isColor()) {
+                  <input type="color" class="form-control color-picker-input" formControlName="colorHex" title="Elige el color">
+                }
+                <button
+                  type="submit"
+                  class="btn btn-sm btn-primary ms-md-auto d-flex align-items-center gap-1"
+                  [disabled]="busyValue() !== null"
+                >
+                  @if (busyValue() === 'new') {
+                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                  } @else {
+                    <i class="bi bi-plus-lg"></i>
+                  }
+                  Agregar
+                </button>
+              </div>
+            </form>
+            @if (isNewValueDuplicate('valueName') || isNewValueDuplicate('shortName')) {
+              <div class="text-danger small mt-2">Ya existe un valor con ese nombre o código SKU.</div>
+            }
+          } @else {
+            <!-- Creación: los valores se envían junto con el atributo -->
+            @for (group of valuesArray.controls; track group; let i = $index) {
+              <div [formGroup]="group" class="row align-items-center mb-3 mb-md-2 gx-2">
+                <div class="col-12 col-md-5 mb-2 mb-md-0">
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    formControlName="valueName"
+                    placeholder="Nombre (Ej. Rojo)"
+                    [class.is-invalid]="isInvalid(group, 'valueName') || isDuplicate(i, 'valueName')"
+                  >
+                </div>
+                <div class="col-12 col-md-4 mb-2 mb-md-0">
+                  <input
+                    type="text"
+                    class="form-control form-control-sm text-uppercase"
+                    formControlName="shortName"
+                    placeholder="Código SKU (Ej. RO)"
+                    [attr.maxlength]="SHORT_NAME_MAX"
+                    [class.is-invalid]="isInvalid(group, 'shortName') || isDuplicate(i, 'shortName')"
+                  >
+                </div>
+                <div class="col-12 col-md-3 d-flex align-items-center justify-content-between justify-content-md-start gap-2">
+                  @if (isColor()) {
+                    <input type="color" class="form-control color-picker-input" formControlName="colorHex" title="Elige el color">
+                  }
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger ms-md-auto"
+                    title="Quitar fila"
+                    [disabled]="valuesArray.length === 1"
+                    (click)="removeValueRow(i)"
+                  >
+                    <i class="bi bi-trash-fill"></i>
+                  </button>
+                </div>
+              </div>
+            }
+            @if (hasDuplicates()) {
+              <div class="text-danger small mt-2">Hay valores con el mismo nombre o código SKU.</div>
+            }
+          }
+        </div>
+
+        <!-- Acciones -->
+        <div class="d-flex flex-column flex-sm-row justify-content-end gap-2 mt-4">
+          <a routerLink="/attributes" class="btn btn-outline-secondary">Cancelar</a>
+          <button
+            type="button"
+            class="btn btn-primary px-4 d-flex align-items-center justify-content-center gap-2"
+            [disabled]="isSaving()"
+            (click)="saveAttribute()"
+          >
+            @if (isSaving()) {
+              <span class="spinner-border spinner-border-sm" role="status"></span>
+            }
+            <span>Guardar Atributo</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

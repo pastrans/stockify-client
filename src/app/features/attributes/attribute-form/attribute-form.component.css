@@ -1,0 +1,11 @@
+.color-picker-input {
+  width: 40px;
+  height: 31px;
+  padding: 0.2rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.new-value-row {
+  border-top: 1px dashed var(--bs-secondary-border-subtle);
+}
