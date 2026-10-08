@@ -44,7 +44,7 @@ export class AttributeFormComponent implements OnInit {
 
   readonly displayTypeOptions = DISPLAY_TYPE_OPTIONS;
   readonly variantCreationOptions = VARIANT_CREATION_OPTIONS;
-  readonly SHORT_NAME_MAX = 4;
+  readonly SHORT_NAME_MAX = 8;
 
   // Estado de la vista
   attribute = signal<Attribute | null>(null);
