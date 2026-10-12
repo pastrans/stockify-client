@@ -1,0 +1,66 @@
+<div class="container mt-4" data-bs-theme="dark">
+  <!-- Volver al listado -->
+  <a routerLink="/products" class="btn btn-link link-secondary text-decoration-none px-0 mb-3 small">
+    <i class="bi bi-arrow-left me-1"></i> Volver a Productos
+  </a>
+
+  @if (isLoading()) {
+    <div class="text-center py-5 text-secondary">
+      <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+      Cargando producto...
+    </div>
+  } @else if (notFound()) {
+    <!-- El producto solicitado no existe -->
+    <div class="card border-secondary bg-dark-subtle shadow-sm mx-auto text-center p-5" style="max-width: 520px;">
+      <i class="bi bi-search text-warning display-4 mb-3"></i>
+      <h4 class="fw-bold mb-2">El producto no existe</h4>
+      <p class="text-secondary small mb-4">
+        El producto que intentas editar no existe o fue eliminado. Consulta el listado de productos para ver los registros disponibles.
+      </p>
+      <div>
+        <a routerLink="/products" class="btn btn-primary px-4">
+          <i class="bi bi-table me-1"></i> Ver listado de productos
+        </a>
+      </div>
+    </div>
+  } @else {
+    <!-- Encabezado -->
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-4">
+      <h2 class="fw-bold mb-0">
+        @if (isEditMode()) {
+          Editar Producto
+        } @else {
+          Nuevo Producto
+        }
+      </h2>
+      @if (status(); as current) {
+        <span class="badge px-2 py-1" [class]="current.badgeClass">
+          <i class="bi me-1" [class]="current.icon"></i> {{ current.label }}
+        </span>
+      }
+      @if (product(); as current) {
+        @if (!current.available) {
+          <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+            <i class="bi bi-dot"></i> Inactivo
+          </span>
+        }
+      }
+    </div>
+
+    <!-- Alerta de Error -->
+    @if (errorMessage()) {
+      <div class="alert alert-danger alert-dismissible fade show small" role="alert">
+        <i class="bi bi-exclamation-octagon me-1"></i> {{ errorMessage() }}
+        <button type="button" class="btn-close" (click)="errorMessage.set(null)" aria-label="Close"></button>
+      </div>
+    }
+
+    <!-- Contenido del formulario: pendiente de la siguiente iteración -->
+    <div class="card shadow-sm border-secondary bg-dark-subtle">
+      <div class="card-body text-center text-secondary py-5">
+        <i class="bi bi-tools display-6 d-block mb-2"></i>
+        El formulario de producto está en construcción.
+      </div>
+    </div>
+  }
+</div>

@@ -10,6 +10,10 @@ const FRIENDLY_MESSAGES: { pattern: RegExp; translate: (match: RegExpMatchArray)
       return `No se puede eliminar ni inhabilitar este atributo porque está en uso en ${products}. ` +
         'Quítalo de esos productos antes de intentarlo de nuevo.';
     }
+  },
+  {
+    pattern: /Cannot delete product: variants have active physical stock/i,
+    translate: () => 'No se puede eliminar el producto porque está bloqueado: tiene existencias o ya fue sincronizado con Odoo.'
   }
 ];
 

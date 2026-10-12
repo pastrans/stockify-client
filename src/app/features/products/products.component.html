@@ -1,0 +1,385 @@
+<div class="container mt-4" data-bs-theme="dark">
+  <!-- Encabezado y Acciones -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Productos</h2>
+      <p class="text-secondary small mb-0">Plantillas de producto con su matriz de variantes y existencias</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <!-- Selector de vista -->
+      <div class="btn-group" role="group" aria-label="Tipo de vista">
+        <button
+          type="button"
+          class="btn"
+          [class.btn-light]="viewMode() === 'table'"
+          [class.btn-outline-secondary]="viewMode() !== 'table'"
+          title="Vista de tabla"
+          aria-label="Vista de tabla"
+          (click)="setViewMode('table')"
+        >
+          <i class="bi bi-list-ul"></i>
+        </button>
+        <button
+          type="button"
+          class="btn"
+          [class.btn-light]="viewMode() === 'kanban'"
+          [class.btn-outline-secondary]="viewMode() !== 'kanban'"
+          title="Vista kanban"
+          aria-label="Vista kanban"
+          (click)="setViewMode('kanban')"
+        >
+          <i class="bi bi-grid-3x3-gap-fill"></i>
+        </button>
+      </div>
+      <a routerLink="/products/new" class="btn btn-primary d-flex align-items-center gap-2">
+        <i class="bi bi-plus-circle-fill"></i> Nuevo Producto
+      </a>
+    </div>
+  </div>
+
+  <!-- Alerta de Error -->
+  @if (errorMessage()) {
+    <div class="alert alert-danger alert-dismissible fade show small" role="alert">
+      <i class="bi bi-exclamation-octagon me-1"></i> {{ errorMessage() }}
+      <button type="button" class="btn-close" (click)="errorMessage.set(null)" aria-label="Close"></button>
+    </div>
+  }
+
+  <!-- Filtros -->
+  <div class="card border-secondary shadow-sm mb-3 bg-dark-subtle">
+    <div class="card-body py-2 d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <span class="small fw-semibold text-secondary">Filtrar por estado:</span>
+      <div class="btn-group btn-group-sm" role="group">
+        <button
+          type="button"
+          class="btn"
+          [class.btn-light]="availabilityFilter() === 'all'"
+          [class.btn-outline-secondary]="availabilityFilter() !== 'all'"
+          (click)="setAvailabilityFilter('all')"
+        >
+          Todos
+        </button>
+        <button
+          type="button"
+          class="btn"
+          [class.btn-success]="availabilityFilter() === 'active'"
+          [class.btn-outline-secondary]="availabilityFilter() !== 'active'"
+          (click)="setAvailabilityFilter('active')"
+        >
+          <i class="bi bi-check-circle me-1"></i> Habilitados
+        </button>
+        <button
+          type="button"
+          class="btn"
+          [class.btn-secondary]="availabilityFilter() === 'inactive'"
+          [class.btn-outline-secondary]="availabilityFilter() !== 'inactive'"
+          (click)="setAvailabilityFilter('inactive')"
+        >
+          <i class="bi bi-slash-circle me-1"></i> Inhabilitados
+        </button>
+      </div>
+    </div>
+
+    <div class="card-body pt-0 pb-3" [formGroup]="filtersForm">
+      <div class="row g-2 align-items-end">
+        <!-- Búsqueda por nombre o prefijo SKU -->
+        <div class="col-12 col-lg-5">
+          <label for="search" class="form-label small text-secondary mb-1">Buscar</label>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input
+              type="search"
+              id="search"
+              class="form-control"
+              formControlName="search"
+              placeholder="Nombre o prefijo SKU"
+            >
+          </div>
+        </div>
+
+        <!-- Estado del ciclo de vida -->
+        <div class="col-12 col-sm-6 col-lg-3">
+          <label for="statusFilter" class="form-label small text-secondary mb-1">Ciclo de vida</label>
+          <select id="statusFilter" class="form-select form-select-sm" formControlName="status">
+            <option [ngValue]="null">Todos los estados</option>
+            @for (option of statusOptions; track option.value) {
+              <option [ngValue]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Categoría POS -->
+        <div class="col-12 col-sm-6 col-lg-3">
+          <label for="categoryFilter" class="form-label small text-secondary mb-1">Categoría POS</label>
+          <select id="categoryFilter" class="form-select form-select-sm" formControlName="posCategoryId">
+            <option [ngValue]="null">Todas las categorías</option>
+            @for (category of categoryOptions(); track category.id) {
+              <option [ngValue]="category.id">{{ category.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="col-12 col-lg-1 d-grid">
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary"
+            title="Limpiar filtros"
+            aria-label="Limpiar filtros"
+            [disabled]="!hasExtraFilters()"
+            (click)="clearFilters()"
+          >
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (viewMode() === 'table') {
+    <!-- VISTA DE TABLA -->
+    <div class="card shadow-sm border-secondary bg-dark-subtle">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 table-dark">
+          <thead>
+            <tr>
+              <th scope="col" style="width: 72px;"><span class="visually-hidden">Imagen</span></th>
+              <th scope="col">Producto</th>
+              <th scope="col">Categorías POS</th>
+              <th scope="col" class="text-center">Variantes</th>
+              <th scope="col" class="text-center">Tienda</th>
+              <th scope="col" class="text-center">Bodega</th>
+              <th scope="col" class="text-end">Precio venta</th>
+              <th scope="col">Ciclo de vida</th>
+              <th scope="col">Estado</th>
+              <th scope="col" class="text-end" style="width: 70px;"><i class="bi bi-gear"></i></th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (isLoading()) {
+              <tr>
+                <td colspan="10" class="text-center py-5 text-secondary">
+                  <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                  Cargando productos...
+                </td>
+              </tr>
+            } @else {
+              @for (product of products(); track product.id) {
+                <tr class="product-row" (click)="goToEdit(product)">
+                  <td>
+                    <ng-container *ngTemplateOutlet="thumbnail; context: { $implicit: product, size: 'sm' }"></ng-container>
+                  </td>
+                  <td>
+                    <div class="fw-semibold">{{ product.name }}</div>
+                    <span class="font-monospace small text-secondary">{{ product.skuPrefix }}</span>
+                  </td>
+                  <td>
+                    <ng-container *ngTemplateOutlet="categoryBadges; context: { $implicit: product }"></ng-container>
+                  </td>
+                  <td class="text-center">{{ product.totalVariantsCount }}</td>
+                  <td class="text-center font-monospace text-info">{{ getStockStore(product) }}</td>
+                  <td class="text-center font-monospace text-warning">{{ getStockWarehouse(product) }}</td>
+                  <td class="text-end font-monospace">$ {{ product.salePrice | number: '1.2-2' }}</td>
+                  <td>
+                    <ng-container *ngTemplateOutlet="statusBadge; context: { $implicit: product }"></ng-container>
+                  </td>
+                  <td>
+                    <ng-container *ngTemplateOutlet="availabilityBadge; context: { $implicit: product }"></ng-container>
+                  </td>
+                  <td class="text-end" (click)="$event.stopPropagation()">
+                    <ng-container *ngTemplateOutlet="actions; context: { $implicit: product }"></ng-container>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="10" class="text-center text-secondary py-5">
+                    <ng-container *ngTemplateOutlet="emptyState"></ng-container>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (totalRecords() > pageSize()) {
+        <div class="card-footer pagination-footer bg-dark border-secondary d-flex justify-content-between align-items-center py-3">
+          <ng-container *ngTemplateOutlet="pagination"></ng-container>
+        </div>
+      }
+    </div>
+  } @else {
+    <!-- VISTA KANBAN -->
+    @if (isLoading()) {
+      <div class="text-center py-5 text-secondary">
+        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+        Cargando productos...
+      </div>
+    } @else {
+      <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-3">
+        @for (product of products(); track product.id) {
+          <div class="col">
+            <div class="card kanban-card h-100 border-secondary bg-dark-subtle shadow-sm" (click)="goToEdit(product)">
+              <div class="card-body p-3 d-flex gap-3">
+                <ng-container *ngTemplateOutlet="thumbnail; context: { $implicit: product, size: 'lg' }"></ng-container>
+
+                <div class="flex-grow-1 min-w-0">
+                  <div class="d-flex align-items-start justify-content-between gap-1">
+                    <div class="min-w-0">
+                      <div class="fw-semibold text-truncate" [title]="product.name">{{ product.name }}</div>
+                      <span class="font-monospace small text-secondary">[{{ product.skuPrefix }}]</span>
+                    </div>
+                    <div (click)="$event.stopPropagation()">
+                      <ng-container *ngTemplateOutlet="actions; context: { $implicit: product }"></ng-container>
+                    </div>
+                  </div>
+
+                  <div class="small mt-1">
+                    Precio: <span class="font-monospace">$ {{ product.salePrice | number: '1.2-2' }}</span>
+                  </div>
+                  <div class="small text-secondary">
+                    {{ product.totalVariantsCount }} {{ product.totalVariantsCount === 1 ? 'variante' : 'variantes' }}
+                    · <span class="text-info" title="Tienda"><i class="bi bi-shop"></i> {{ getStockStore(product) }}</span>
+                    · <span class="text-warning" title="Bodega"><i class="bi bi-box-seam"></i> {{ getStockWarehouse(product) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card-footer bg-transparent border-secondary d-flex flex-wrap align-items-center gap-1 px-3 py-2">
+                <ng-container *ngTemplateOutlet="statusBadge; context: { $implicit: product }"></ng-container>
+                @if (!product.available) {
+                  <ng-container *ngTemplateOutlet="availabilityBadge; context: { $implicit: product }"></ng-container>
+                }
+                <div class="ms-auto">
+                  <ng-container *ngTemplateOutlet="categoryBadges; context: { $implicit: product }"></ng-container>
+                </div>
+              </div>
+            </div>
+          </div>
+        } @empty {
+          <div class="col-12 w-100">
+            <div class="card border-secondary bg-dark-subtle text-center text-secondary py-5">
+              <ng-container *ngTemplateOutlet="emptyState"></ng-container>
+            </div>
+          </div>
+        }
+      </div>
+
+      @if (totalRecords() > pageSize()) {
+        <div class="pagination-footer d-flex justify-content-between align-items-center mt-3">
+          <ng-container *ngTemplateOutlet="pagination"></ng-container>
+        </div>
+      }
+    }
+  }
+</div>
+
+<!-- PLANTILLAS COMPARTIDAS POR AMBAS VISTAS -->
+
+<ng-template #thumbnail let-product let-size="size">
+  @if (getImageUrl(product); as url) {
+    <img
+      [src]="url"
+      [alt]="product.name"
+      class="product-thumb rounded border border-secondary"
+      [class.product-thumb-lg]="size === 'lg'"
+      loading="lazy"
+      (error)="onImageError(url)"
+    >
+  } @else {
+    <div
+      class="product-thumb rounded border border-secondary bg-black bg-opacity-25 d-flex align-items-center justify-content-center text-secondary"
+      [class.product-thumb-lg]="size === 'lg'"
+    >
+      <i class="bi bi-image" [class.fs-3]="size === 'lg'"></i>
+    </div>
+  }
+</ng-template>
+
+<ng-template #categoryBadges let-product>
+  <div class="d-flex flex-wrap gap-1">
+    @for (category of getCategories(product); track category.id) {
+      <span class="badge bg-secondary-subtle text-light border border-secondary d-inline-flex align-items-center gap-1">
+        @if (category.hex) {
+          <span class="color-dot" [style.background-color]="category.hex"></span>
+        }
+        {{ category.label }}
+      </span>
+    }
+  </div>
+</ng-template>
+
+<ng-template #statusBadge let-product>
+  @if (getStatusOption(product.status); as status) {
+    <span class="badge px-2 py-1" [class]="status.badgeClass">
+      <i class="bi me-1" [class]="status.icon"></i> {{ status.label }}
+    </span>
+  }
+</ng-template>
+
+<ng-template #availabilityBadge let-product>
+  @if (product.available) {
+    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+      <i class="bi bi-dot"></i> Activo
+    </span>
+  } @else {
+    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+      <i class="bi bi-dot"></i> Inactivo
+    </span>
+  }
+</ng-template>
+
+<ng-template #actions let-product>
+  <div ngbDropdown container="body" placement="bottom-end" class="d-inline-block">
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-secondary gear-toggle"
+      title="Opciones"
+      aria-label="Opciones"
+      ngbDropdownToggle
+    >
+      <i class="bi bi-gear-fill"></i>
+    </button>
+    <div ngbDropdownMenu class="dropdown-menu-dark">
+      <button ngbDropdownItem (click)="goToEdit(product)">
+        <i class="bi bi-pencil-fill me-2 text-warning"></i> Editar
+      </button>
+      @if (product.available) {
+        <div class="dropdown-divider"></div>
+        <button
+          ngbDropdownItem
+          class="text-danger"
+          [disabled]="product.isLocked"
+          [title]="product.isLocked ? 'No se puede eliminar: el producto tiene existencias o está sincronizado' : ''"
+          (click)="deleteProduct(product)"
+        >
+          <i class="bi bi-trash-fill me-2"></i> Eliminar
+        </button>
+      }
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #emptyState>
+  <i class="bi bi-box-seam display-6 d-block mb-2"></i>
+  @if (hasExtraFilters()) {
+    Ningún producto coincide con los filtros aplicados.
+  } @else {
+    No se encontraron productos registrados.
+  }
+</ng-template>
+
+<ng-template #pagination>
+  <span class="small text-secondary">
+    Total: <strong>{{ totalRecords() }}</strong> registros
+  </span>
+  <ngb-pagination
+    [collectionSize]="totalRecords()"
+    [page]="currentPage()"
+    [pageSize]="pageSize()"
+    [maxSize]="5"
+    [rotate]="true"
+    [boundaryLinks]="true"
+    (pageChange)="onPageChange($event)"
+    size="sm"
+  ></ngb-pagination>
+</ng-template>

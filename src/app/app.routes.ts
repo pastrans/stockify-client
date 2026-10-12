@@ -33,7 +33,20 @@ export const routes: Routes = [
     children: [
       {
         path: 'products',
-        loadComponent: () => import('./features/products/products.component').then(m => m.ProductsComponent)
+        children: [
+          {
+            path: '',
+            loadComponent: () => import('./features/products/products.component').then(m => m.ProductsComponent)
+          },
+          {
+            path: 'new',
+            loadComponent: () => import('./features/products/product-form/product-form.component').then(m => m.ProductFormComponent)
+          },
+          {
+            path: ':id/edit',
+            loadComponent: () => import('./features/products/product-form/product-form.component').then(m => m.ProductFormComponent)
+          }
+        ]
       },
       {
         path: 'attributes',
