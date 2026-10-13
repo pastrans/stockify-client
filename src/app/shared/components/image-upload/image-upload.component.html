@@ -1,0 +1,66 @@
+<div class="image-upload" [class.image-upload-sm]="size === 'sm'">
+  <button
+    type="button"
+    class="image-box rounded border bg-black bg-opacity-25 d-flex align-items-center justify-content-center text-secondary p-0"
+    [class.border-secondary]="state() !== 'failed' && state() !== 'ready'"
+    [class.border-danger]="state() === 'failed'"
+    [class.border-success]="state() === 'ready'"
+    [disabled]="disabled || isBusy"
+    [title]="errorMessage() ?? (disabled ? label : 'Seleccionar ' + label.toLowerCase())"
+    [attr.aria-label]="'Seleccionar ' + label.toLowerCase()"
+    (click)="fileInput.click()"
+  >
+    @if (displayUrl; as url) {
+      <img [src]="url" [alt]="label" class="w-100 h-100 rounded object-fit-cover" [class.opacity-50]="isBusy || state() === 'failed'">
+    } @else {
+      <span class="text-center">
+        <i class="bi bi-camera" [class.fs-3]="size === 'lg'"></i>
+        @if (size === 'lg') {
+          <span class="d-block small mt-1">{{ label }}</span>
+        }
+      </span>
+    }
+
+    <!-- Estados superpuestos -->
+    @if (isBusy) {
+      <span class="image-overlay">
+        <span class="spinner-border spinner-border-sm text-light" role="status"></span>
+        @if (size === 'lg') {
+          <span class="small mt-1">{{ state() === 'uploading' ? 'Subiendo...' : 'Procesando...' }}</span>
+        }
+      </span>
+    } @else if (state() === 'failed') {
+      <span class="image-overlay text-danger">
+        <i class="bi bi-exclamation-triangle-fill" [class.fs-4]="size === 'lg'"></i>
+      </span>
+    }
+  </button>
+
+  <!-- Acciones -->
+  @if (canRemove || canUndo) {
+    <div class="image-actions">
+      @if (canUndo) {
+        <button type="button" class="btn btn-sm btn-dark border-secondary" title="Descartar cambio" aria-label="Descartar cambio" (click)="undo($event)">
+          <i class="bi bi-arrow-counterclockwise"></i>
+        </button>
+      }
+      @if (canRemove) {
+        <button type="button" class="btn btn-sm btn-danger" title="Quitar imagen" aria-label="Quitar imagen" (click)="remove($event)">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      }
+    </div>
+  }
+
+  <input #fileInput type="file" class="d-none" [accept]="accept" (change)="onFileSelected($event)">
+</div>
+
+@if (size === 'lg') {
+  @if (errorMessage()) {
+    <div class="text-danger small mt-1 image-message">{{ errorMessage() }}</div>
+  } @else if (state() === 'ready') {
+    <div class="text-success small mt-1 image-message"><i class="bi bi-check-circle me-1"></i>Lista para guardar</div>
+  } @else if (state() === 'removed') {
+    <div class="text-warning small mt-1 image-message">Se quitará al guardar</div>
+  }
+}
