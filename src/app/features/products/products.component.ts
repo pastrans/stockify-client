@@ -17,8 +17,10 @@ import { ProductService } from '../../core/services/product.service';
 import { PosCategoryService } from '../../core/services/pos-category.service';
 import { getApiErrorMessage } from '../../shared/utils/api-error';
 import { ImgFallbackDirective } from '../../shared/directives/img-fallback.directive';
+import { AvailabilityFilter, toAvailableParam } from '../../shared/models/list-filter.model';
+import { ListFiltersComponent } from '../../shared/components/list-filters/list-filters.component';
+import { SearchInputComponent } from '../../shared/components/search-input/search-input.component';
 
-type AvailabilityFilter = 'all' | 'active' | 'inactive';
 type ViewMode = 'table' | 'kanban';
 
 interface CategoryOption {
@@ -32,7 +34,17 @@ const VIEW_STORAGE_KEY = 'stockify.products.view';
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [RouterLink, ReactiveFormsModule, DecimalPipe, NgTemplateOutlet, NgbDropdownModule, NgbPaginationModule, ImgFallbackDirective],
+  imports: [
+    RouterLink,
+    ReactiveFormsModule,
+    DecimalPipe,
+    NgTemplateOutlet,
+    NgbDropdownModule,
+    NgbPaginationModule,
+    ImgFallbackDirective,
+    ListFiltersComponent,
+    SearchInputComponent
+  ],
   templateUrl: './products.component.html',
   styleUrls: ['./products.component.css']
 })
@@ -102,11 +114,10 @@ export class ProductsComponent implements OnInit {
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
-    const available = { all: 'all', active: 'true', inactive: 'false' } as const;
     const { search, status, posCategoryId } = this.filtersForm.getRawValue();
 
     this.productService.getProducts(page, this.pageSize(), {
-      available: available[this.availabilityFilter()],
+      available: toAvailableParam(this.availabilityFilter()),
       search: search ?? '',
       status,
       posCategoryId

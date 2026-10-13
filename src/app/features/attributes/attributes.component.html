@@ -18,41 +18,23 @@
     </div>
   }
 
-  <!-- Filtro por Estado -->
-  <div class="card border-secondary shadow-sm mb-3 bg-dark-subtle">
-    <div class="card-body py-2 d-flex flex-wrap align-items-center justify-content-between gap-2">
-      <span class="small fw-semibold text-secondary">Filtrar por estado:</span>
-      <div class="btn-group btn-group-sm" role="group">
-        <button
-          type="button"
-          class="btn"
-          [class.btn-light]="statusFilter() === 'all'"
-          [class.btn-outline-secondary]="statusFilter() !== 'all'"
-          (click)="setStatusFilter('all')"
-        >
-          Todos
-        </button>
-        <button
-          type="button"
-          class="btn"
-          [class.btn-success]="statusFilter() === 'active'"
-          [class.btn-outline-secondary]="statusFilter() !== 'active'"
-          (click)="setStatusFilter('active')"
-        >
-          <i class="bi bi-check-circle me-1"></i> Habilitados
-        </button>
-        <button
-          type="button"
-          class="btn"
-          [class.btn-secondary]="statusFilter() === 'inactive'"
-          [class.btn-outline-secondary]="statusFilter() !== 'inactive'"
-          (click)="setStatusFilter('inactive')"
-        >
-          <i class="bi bi-slash-circle me-1"></i> Inhabilitados
-        </button>
-      </div>
+  <!-- Filtros -->
+  <app-list-filters
+    [availability]="availabilityFilter()"
+    (availabilityChange)="setAvailabilityFilter($event)"
+    [canClear]="hasExtraFilters()"
+    (clear)="clearFilters()"
+    [formGroup]="filtersForm"
+  >
+    <!-- Búsqueda por nombre del atributo o por sus valores -->
+    <div class="col-12 col-lg">
+      <app-search-input
+        formControlName="search"
+        inputId="search"
+        placeholder="Nombre del atributo, valor o código SKU (Ej. Color, Rojo, RO)"
+      ></app-search-input>
     </div>
-  </div>
+  </app-list-filters>
 
   <!-- Tabla de Atributos -->
   <div class="card shadow-sm border-secondary bg-dark-subtle">
@@ -152,7 +134,11 @@
               <tr>
                 <td colspan="8" class="text-center text-secondary py-5">
                   <i class="bi bi-palette display-6 d-block mb-2"></i>
-                  No se encontraron atributos registrados.
+                  @if (hasExtraFilters()) {
+                    Ningún atributo coincide con la búsqueda.
+                  } @else {
+                    No se encontraron atributos registrados.
+                  }
                 </td>
               </tr>
             }

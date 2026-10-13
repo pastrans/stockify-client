@@ -46,93 +46,40 @@
   }
 
   <!-- Filtros -->
-  <div class="card border-secondary shadow-sm mb-3 bg-dark-subtle">
-    <div class="card-body py-2 d-flex flex-wrap align-items-center justify-content-between gap-2">
-      <span class="small fw-semibold text-secondary">Filtrar por estado:</span>
-      <div class="btn-group btn-group-sm" role="group">
-        <button
-          type="button"
-          class="btn"
-          [class.btn-light]="availabilityFilter() === 'all'"
-          [class.btn-outline-secondary]="availabilityFilter() !== 'all'"
-          (click)="setAvailabilityFilter('all')"
-        >
-          Todos
-        </button>
-        <button
-          type="button"
-          class="btn"
-          [class.btn-success]="availabilityFilter() === 'active'"
-          [class.btn-outline-secondary]="availabilityFilter() !== 'active'"
-          (click)="setAvailabilityFilter('active')"
-        >
-          <i class="bi bi-check-circle me-1"></i> Habilitados
-        </button>
-        <button
-          type="button"
-          class="btn"
-          [class.btn-secondary]="availabilityFilter() === 'inactive'"
-          [class.btn-outline-secondary]="availabilityFilter() !== 'inactive'"
-          (click)="setAvailabilityFilter('inactive')"
-        >
-          <i class="bi bi-slash-circle me-1"></i> Inhabilitados
-        </button>
-      </div>
+  <app-list-filters
+    [availability]="availabilityFilter()"
+    (availabilityChange)="setAvailabilityFilter($event)"
+    [canClear]="hasExtraFilters()"
+    (clear)="clearFilters()"
+    [formGroup]="filtersForm"
+  >
+    <!-- Búsqueda por nombre o prefijo SKU -->
+    <div class="col-12 col-lg">
+      <app-search-input formControlName="search" inputId="search" placeholder="Nombre o prefijo SKU"></app-search-input>
     </div>
 
-    <div class="card-body pt-0 pb-3" [formGroup]="filtersForm">
-      <div class="row g-2 align-items-end">
-        <!-- Búsqueda por nombre o prefijo SKU -->
-        <div class="col-12 col-lg">
-          <label for="search" class="form-label small text-secondary mb-1">Buscar</label>
-          <div class="input-group input-group-sm">
-            <span class="input-group-text"><i class="bi bi-search"></i></span>
-            <input
-              type="search"
-              id="search"
-              class="form-control"
-              formControlName="search"
-              placeholder="Nombre o prefijo SKU"
-            >
-          </div>
-        </div>
-
-        <!-- Estado del ciclo de vida -->
-        <div class="col-12 col-sm-6 col-lg-3">
-          <label for="statusFilter" class="form-label small text-secondary mb-1">Ciclo de vida</label>
-          <select id="statusFilter" class="form-select form-select-sm" formControlName="status">
-            <option [ngValue]="null">Todos los estados</option>
-            @for (option of statusOptions; track option.value) {
-              <option [ngValue]="option.value">{{ option.label }}</option>
-            }
-          </select>
-        </div>
-
-        <!-- Categoría POS -->
-        <div class="col-12 col-sm-6 col-lg-3">
-          <label for="categoryFilter" class="form-label small text-secondary mb-1">Categoría POS</label>
-          <select id="categoryFilter" class="form-select form-select-sm" formControlName="posCategoryId">
-            <option [ngValue]="null">Todas las categorías</option>
-            @for (category of categoryOptions(); track category.id) {
-              <option [ngValue]="category.id">{{ category.label }}</option>
-            }
-          </select>
-        </div>
-
-        <!-- En móvil ocupa el ancho completo y se separa de los filtros; en escritorio va al lado -->
-        <div class="col-12 col-lg-auto d-grid d-lg-block mt-3 mt-lg-0">
-          <button
-            type="button"
-            class="btn btn-sm btn-outline-secondary"
-            [disabled]="!hasExtraFilters()"
-            (click)="clearFilters()"
-          >
-            <i class="bi bi-x-circle me-1"></i> Limpiar filtros
-          </button>
-        </div>
-      </div>
+    <!-- Estado del ciclo de vida -->
+    <div class="col-12 col-sm-6 col-lg-3">
+      <label for="statusFilter" class="form-label small text-secondary mb-1">Ciclo de vida</label>
+      <select id="statusFilter" class="form-select form-select-sm" formControlName="status">
+        <option [ngValue]="null">Todos los estados</option>
+        @for (option of statusOptions; track option.value) {
+          <option [ngValue]="option.value">{{ option.label }}</option>
+        }
+      </select>
     </div>
-  </div>
+
+    <!-- Categoría POS -->
+    <div class="col-12 col-sm-6 col-lg-3">
+      <label for="categoryFilter" class="form-label small text-secondary mb-1">Categoría POS</label>
+      <select id="categoryFilter" class="form-select form-select-sm" formControlName="posCategoryId">
+        <option [ngValue]="null">Todas las categorías</option>
+        @for (category of categoryOptions(); track category.id) {
+          <option [ngValue]="category.id">{{ category.label }}</option>
+        }
+      </select>
+    </div>
+  </app-list-filters>
 
   @if (viewMode() === 'table') {
     <!-- VISTA DE TABLA -->

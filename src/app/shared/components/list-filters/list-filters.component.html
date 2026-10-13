@@ -1,0 +1,49 @@
+<div class="card border-secondary shadow-sm mb-3 bg-dark-subtle">
+  <div class="card-body py-2 d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <span class="small fw-semibold text-secondary">Filtrar por estado:</span>
+    <div class="btn-group btn-group-sm" role="group">
+      <button
+        type="button"
+        class="btn"
+        [class.btn-light]="availability === 'all'"
+        [class.btn-outline-secondary]="availability !== 'all'"
+        (click)="select('all')"
+      >
+        Todos
+      </button>
+      <button
+        type="button"
+        class="btn"
+        [class.btn-success]="availability === 'active'"
+        [class.btn-outline-secondary]="availability !== 'active'"
+        (click)="select('active')"
+      >
+        <i class="bi bi-check-circle me-1"></i> Habilitados
+      </button>
+      <button
+        type="button"
+        class="btn"
+        [class.btn-secondary]="availability === 'inactive'"
+        [class.btn-outline-secondary]="availability !== 'inactive'"
+        (click)="select('inactive')"
+      >
+        <i class="bi bi-slash-circle me-1"></i> Inhabilitados
+      </button>
+    </div>
+  </div>
+
+  @if (showFields) {
+    <div class="card-body pt-0 pb-3">
+      <div class="row g-2 align-items-end">
+        <ng-content></ng-content>
+
+        <!-- En móvil ocupa el ancho completo y se separa de los filtros; en escritorio va al lado -->
+        <div class="col-12 col-lg-auto d-grid d-lg-block mt-3 mt-lg-0">
+          <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="!canClear" (click)="clear.emit()">
+            <i class="bi bi-x-circle me-1"></i> Limpiar filtros
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

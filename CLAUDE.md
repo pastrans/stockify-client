@@ -18,7 +18,7 @@ SPA en Angular para **Stockify**: digitalización de inventario retail (catálog
 - Estado con Angular Signals (`signal`, `computed`), Reactive Forms e `inject()` en lugar de constructor.
 - Rol fijo `'ADMIN'` en los formularios de usuario. No existe `role.guard`.
 - Las rutas públicas cuelgan de `/auth/*` (`/auth/login`, `/auth/reset-password`). Las redirecciones de sesión van a `/auth/login`, nunca a `/login`.
-- Cada listado usa pestañas de estado (Todos / Habilitados / Inhabilitados) con el parámetro `available`. No se añaden buscadores de texto que no estén en la especificación.
+- Cada listado usa pestañas de estado (Todos / Habilitados / Inhabilitados) con el parámetro `available`. La tarjeta de filtros es `app-list-filters` (pestañas, campos propios proyectados y "Limpiar filtros"), con `app-search-input` para el buscador y `toAvailableParam()` (`shared/models/list-filter.model.ts`) para el parámetro. No se añaden buscadores de texto que no soporte la API.
 - La eliminación es suave (soft-delete): el registro queda con `available: false`.
 - Los textos de la UI van en español.
 
@@ -28,9 +28,9 @@ SPA en Angular para **Stockify**: digitalización de inventario retail (catálog
 |---|---|
 | `auth` | `POST /login`, `POST /forgot-password`, `POST /reset-password/:token` |
 | `users` | CRUD + `PATCH /:id/status`; paginado con `page`, `limit` y `available` |
-| `attributes` | CRUD; valores: `POST /:id/values`, `PUT/DELETE /values/:valueId` |
+| `attributes` | CRUD; paginado con `page`, `limit`, `available` y `search` (nombre del atributo o `valueName`/`shortName` de sus valores activos); valores: `POST /:id/values`, `PUT/DELETE /values/:valueId` |
 | `pos-categories` | CRUD (jerarquía con `parentId`, `color` como int de Odoo, `sequence`) |
-| `products` | CRUD de plantillas; `PATCH /sync` (`productId` o `productIds`); `PATCH /:id/unsync`; variantes: `PUT/DELETE /variants/:variantId`, `PATCH /variants/:variantId/stock` |
+| `products` | CRUD de plantillas; paginado con `page`, `limit`, `available`, `search`, `status` y `posCategoryId`; `PATCH /sync` (`productId` o `productIds`); `PATCH /:id/unsync`; variantes: `PUT/DELETE /variants/:variantId`, `PATCH /variants/:variantId/stock` |
 | `uploads` | `POST /image` (multipart, campo `file`; JPG/PNG/WebP ≤ 5 MB) → `{ uploadId, key, status: 'processing' }`; `GET /:uploadId` → `processing`, `ready` (con `previewUrl`, válida 15 min) o `failed` (con `error`) |
 
 Los errores llegan como `{ error: string }` (mensaje en inglés), con 400 para las reglas de negocio. Se leen con `getApiErrorMessage(err, fallback)` (`shared/utils/api-error.ts`), que también acepta `{ message }` y traduce al español los mensajes de negocio conocidos. Los mensajes nuevos que necesiten traducción se añaden ahí.

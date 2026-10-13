@@ -22,7 +22,9 @@ export class AttributeService {
   getAttributes(
     page: number = 1,
     limit: number = 10,
-    available: 'all' | 'true' | 'false' = 'all'
+    available: 'all' | 'true' | 'false' = 'all',
+    // Busca en el nombre del atributo y en el nombre o código SKU de sus valores activos
+    search: string = ''
   ): Observable<AttributesListResponse> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -30,6 +32,9 @@ export class AttributeService {
 
     if (available !== 'all') {
       params = params.set('available', available);
+    }
+    if (search.trim()) {
+      params = params.set('search', search.trim());
     }
 
     return this.http.get<AttributesListResponse>(this.apiUrl, { params });

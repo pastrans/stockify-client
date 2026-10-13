@@ -1,6 +1,9 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { NgbDropdownModule, NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
 import Swal from 'sweetalert2';
 import {
   Attribute,
@@ -11,19 +14,21 @@ import {
 } from '../../shared/models/attribute.model';
 import { AttributeService } from '../../core/services/attribute.service';
 import { getApiErrorMessage } from '../../shared/utils/api-error';
-
-type StatusFilter = 'all' | 'active' | 'inactive';
+import { AvailabilityFilter, toAvailableParam } from '../../shared/models/list-filter.model';
+import { ListFiltersComponent } from '../../shared/components/list-filters/list-filters.component';
+import { SearchInputComponent } from '../../shared/components/search-input/search-input.component';
 
 @Component({
   selector: 'app-attributes',
   standalone: true,
-  imports: [RouterLink, NgbDropdownModule, NgbPaginationModule],
+  imports: [RouterLink, ReactiveFormsModule, NgbDropdownModule, NgbPaginationModule, ListFiltersComponent, SearchInputComponent],
   templateUrl: './attributes.component.html',
   styleUrls: ['./attributes.component.css']
 })
 export class AttributesComponent implements OnInit {
   private readonly attributeService = inject(AttributeService);
   private readonly router = inject(Router);
+  private readonly fb = inject(FormBuilder);
 
   // Cantidad de valores que se muestran como chips antes de resumir con "+N"
   readonly VALUES_PREVIEW = 5;
@@ -39,7 +44,22 @@ export class AttributesComponent implements OnInit {
   totalRecords = signal<number>(0);
 
   // Filtro de estado (parámetro `available` de la API)
-  statusFilter = signal<StatusFilter>('all');
+  availabilityFilter = signal<AvailabilityFilter>('all');
+
+  // Búsqueda por nombre del atributo o por nombre/código SKU de sus valores
+  filtersForm = this.fb.nonNullable.group({
+    search: ['']
+  });
+
+  constructor() {
+    this.filtersForm.valueChanges
+      .pipe(
+        debounceTime(350),
+        distinctUntilChanged((a, b) => a.search === b.search),
+        takeUntilDestroyed()
+      )
+      .subscribe(() => this.loadAttributes(1));
+  }
 
   ngOnInit(): void {
     this.loadAttributes();
@@ -49,9 +69,9 @@ export class AttributesComponent implements OnInit {
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
-    const available = { all: 'all', active: 'true', inactive: 'false' } as const;
+    const { search } = this.filtersForm.getRawValue();
 
-    this.attributeService.getAttributes(page, this.pageSize(), available[this.statusFilter()]).subscribe({
+    this.attributeService.getAttributes(page, this.pageSize(), toAvailableParam(this.availabilityFilter()), search).subscribe({
       next: (res) => {
         this.attributes.set(res.data ?? []);
         this.currentPage.set(res.page);
@@ -70,9 +90,17 @@ export class AttributesComponent implements OnInit {
     this.loadAttributes(newPage);
   }
 
-  setStatusFilter(status: StatusFilter): void {
-    this.statusFilter.set(status);
+  setAvailabilityFilter(filter: AvailabilityFilter): void {
+    this.availabilityFilter.set(filter);
     this.loadAttributes(1);
+  }
+
+  hasExtraFilters(): boolean {
+    return !!this.filtersForm.controls.search.value.trim();
+  }
+
+  clearFilters(): void {
+    this.filtersForm.reset({ search: '' });
   }
 
   getDisplayTypeLabel(type: DisplayType): string {
