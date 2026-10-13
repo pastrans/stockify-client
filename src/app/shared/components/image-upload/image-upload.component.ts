@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs';
 import { UploadService } from '../../../core/services/upload.service';
 import { ImageChange } from '../../models/upload.model';
 import { getApiErrorMessage } from '../../utils/api-error';
+import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
 import { CameraCaptureComponent, CameraCaptureResult } from '../camera-capture/camera-capture.component';
 import { ImagePreviewComponent, ImagePreviewSource, ImagePreviewStatus } from '../image-preview/image-preview.component';
 
@@ -24,7 +25,7 @@ type UploadState = 'idle' | 'uploading' | 'processing' | 'ready' | 'failed' | 'r
 @Component({
   selector: 'app-image-upload',
   standalone: true,
-  imports: [NgbDropdownModule],
+  imports: [NgbDropdownModule, ImgFallbackDirective],
   templateUrl: './image-upload.component.html',
   styleUrls: ['./image-upload.component.css']
 })

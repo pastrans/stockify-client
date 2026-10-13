@@ -1,5 +1,6 @@
 import { Component, Signal, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
 
 export type ImagePreviewStatus = 'saved' | 'uploading' | 'processing' | 'ready' | 'failed';
 
@@ -28,6 +29,7 @@ export interface ImagePreviewSource {
 @Component({
   selector: 'app-image-preview',
   standalone: true,
+  imports: [ImgFallbackDirective],
   templateUrl: './image-preview.component.html',
   styleUrls: ['./image-preview.component.css']
 })

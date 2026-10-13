@@ -282,7 +282,7 @@
       class="product-thumb rounded border border-secondary"
       [class.product-thumb-lg]="size === 'lg'"
       loading="lazy"
-      (error)="onImageError(url)"
+      appImgFallback
     >
   } @else {
     <div

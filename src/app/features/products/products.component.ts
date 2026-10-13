@@ -16,6 +16,7 @@ import { ODOO_COLORS, PosCategory } from '../../shared/models/pos-category.model
 import { ProductService } from '../../core/services/product.service';
 import { PosCategoryService } from '../../core/services/pos-category.service';
 import { getApiErrorMessage } from '../../shared/utils/api-error';
+import { ImgFallbackDirective } from '../../shared/directives/img-fallback.directive';
 
 type AvailabilityFilter = 'all' | 'active' | 'inactive';
 type ViewMode = 'table' | 'kanban';
@@ -31,7 +32,7 @@ const VIEW_STORAGE_KEY = 'stockify.products.view';
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [RouterLink, ReactiveFormsModule, DecimalPipe, NgTemplateOutlet, NgbDropdownModule, NgbPaginationModule],
+  imports: [RouterLink, ReactiveFormsModule, DecimalPipe, NgTemplateOutlet, NgbDropdownModule, NgbPaginationModule, ImgFallbackDirective],
   templateUrl: './products.component.html',
   styleUrls: ['./products.component.css']
 })
@@ -81,9 +82,6 @@ export class ProductsComponent implements OnInit {
       .sort((a, b) => a.label.localeCompare(b.label));
   });
   private categoryById = computed(() => new Map(this.categoryOptions().map(c => [c.id, c])));
-
-  // Imágenes que no cargaron: se muestra el marcador en su lugar
-  private brokenImages = signal<ReadonlySet<string>>(new Set());
 
   constructor() {
     this.filtersForm.valueChanges
@@ -181,15 +179,9 @@ export class ProductsComponent implements OnInit {
       .filter((c): c is CategoryOption => !!c);
   }
 
-  // Imagen principal o, si no tiene, la primera imagen de sus variantes
+  // Imagen principal o, si no tiene, la primera imagen de sus variantes (si no carga, appImgFallback)
   getImageUrl(product: Product): string | null {
-    const url = product.mainImageUrl ?? product.variants.find(v => v.imageUrl)?.imageUrl ?? null;
-    return url && !this.brokenImages().has(url) ? url : null;
-  }
-
-  onImageError(url: string | null): void {
-    if (!url) return;
-    this.brokenImages.update(set => new Set(set).add(url));
+    return product.mainImageUrl ?? product.variants.find(v => v.imageUrl)?.imageUrl ?? null;
   }
 
   getStockStore(product: Product): number {

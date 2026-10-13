@@ -13,7 +13,7 @@
     ngbDropdownToggle
   >
     @if (displayUrl; as url) {
-      <img [src]="url" [alt]="label" class="w-100 h-100 rounded object-fit-cover" [class.opacity-50]="isBusy || state() === 'failed'">
+      <img [src]="url" [alt]="label" appImgFallback class="w-100 h-100 rounded object-fit-cover" [class.opacity-50]="isBusy || state() === 'failed'">
     } @else {
       <span class="text-center">
         <i class="bi bi-camera" [class.fs-3]="size === 'lg'"></i>

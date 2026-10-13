@@ -10,7 +10,7 @@
     <!-- Imagen guardada -->
     <div class="preview-frame rounded border border-secondary bg-black">
       @if (source.savedUrl(); as url) {
-        <img [src]="url" [alt]="source.label" class="preview-media">
+        <img [src]="url" appImgFallback [alt]="source.label" class="preview-media">
       }
     </div>
   } @else {
@@ -20,7 +20,7 @@
         <h6 class="small text-secondary text-uppercase fw-bold mb-2">Original</h6>
         <div class="preview-frame rounded border border-secondary bg-black">
           @if (source.originalUrl(); as url) {
-            <img [src]="url" alt="Imagen original" class="preview-media">
+            <img [src]="url" appImgFallback alt="Imagen original" class="preview-media">
           }
         </div>
       </div>
@@ -36,7 +36,7 @@
           @switch (source.status()) {
             @case ('ready') {
               @if (source.processedUrl(); as url) {
-                <img [src]="url" alt="Imagen procesada" class="preview-media">
+                <img [src]="url" appImgFallback alt="Imagen procesada" class="preview-media">
               }
             }
             @case ('failed') {
