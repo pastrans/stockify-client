@@ -54,6 +54,13 @@ export class ProductAttributeLinesComponent {
   @Input() product: Product | null = null;
   @Input() skuPrefix = '';
   @Input() refreshing = false;
+  // Total de atributos habilitados en la API (puede ser mayor que los cargados en `attributes`)
+  @Input() catalogTotal = 0;
+
+  // El catálogo llegó recortado: hay atributos que no aparecen en el selector
+  get isCatalogTruncated(): boolean {
+    return this.catalogTotal > this.attributes.length;
+  }
 
   // Se emite al abrir un select: el padre recarga el catálogo para traer atributos y valores nuevos
   @Output() refresh = new EventEmitter<void>();

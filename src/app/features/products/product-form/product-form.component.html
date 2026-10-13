@@ -252,6 +252,7 @@
             [product]="product()"
             [skuPrefix]="productForm.controls.skuPrefix.value"
             [refreshing]="isRefreshingAttributes()"
+            [catalogTotal]="attributesTotal()"
             (refresh)="loadAttributes()"
           ></app-product-attribute-lines>
         </div>

@@ -75,6 +75,8 @@ export class ProductFormComponent implements OnInit {
   attributes = signal<Attribute[]>([]);
   categories = signal<PosCategory[]>([]);
   isRefreshingAttributes = signal<boolean>(false);
+  // Total de atributos habilitados según la API: si supera CATALOG_LIMIT, no todos se cargaron
+  attributesTotal = signal<number>(0);
   isRefreshingCategories = signal<boolean>(false);
 
   // Imagen principal: estado de la subida en curso (si la hay)
@@ -147,6 +149,7 @@ export class ProductFormComponent implements OnInit {
     this.attributeService.getAttributes(1, this.CATALOG_LIMIT, 'true').subscribe({
       next: (res) => {
         this.attributes.set(res.data ?? []);
+        this.attributesTotal.set(res.total);
         this.isRefreshingAttributes.set(false);
       },
       error: (err) => {
