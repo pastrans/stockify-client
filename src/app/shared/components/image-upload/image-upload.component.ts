@@ -1,17 +1,22 @@
-import { Component, EventEmitter, Input, OnDestroy, Output, inject, signal } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild, computed, inject, signal } from '@angular/core';
+import { NgbDropdownModule, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Subscription } from 'rxjs';
 import { UploadService } from '../../../core/services/upload.service';
 import { ImageChange } from '../../models/upload.model';
 import { getApiErrorMessage } from '../../utils/api-error';
+import { CameraCaptureComponent, CameraCaptureResult } from '../camera-capture/camera-capture.component';
+import { ImagePreviewComponent, ImagePreviewSource, ImagePreviewStatus } from '../image-preview/image-preview.component';
 
 type UploadState = 'idle' | 'uploading' | 'processing' | 'ready' | 'failed' | 'removed';
 
 /**
  * Selector de imagen con subida diferida a S3:
- *  1. POST /uploads/image deja la foto en tmp/ y devuelve un uploadId.
- *  2. Se consulta GET /uploads/:uploadId hasta 'ready' (vista previa) o 'failed' (error).
- *  3. El formulario envía el uploadId al guardar; este componente solo emite `changed`.
+ *  1. El usuario sube un archivo o toma una fotografía (menú al pulsar la imagen).
+ *  2. POST /uploads/image deja la foto en tmp/ y devuelve un uploadId.
+ *  3. Se consulta GET /uploads/:uploadId hasta 'ready' (vista previa) o 'failed' (error).
+ *  4. El formulario envía el uploadId al guardar; este componente solo emite `changed`.
  *
+ * "Ver imagen" abre la vista ampliada; con una subida en curso muestra la original y la procesada.
  * Cuando el padre cambia `imageUrl` (p. ej. tras guardar), el componente vuelve al estado inicial.
  *
  *   <app-image-upload [imageUrl]="product.mainImageUrl" (changed)="onImageChange($event)">
@@ -19,11 +24,13 @@ type UploadState = 'idle' | 'uploading' | 'processing' | 'ready' | 'failed' | 'r
 @Component({
   selector: 'app-image-upload',
   standalone: true,
+  imports: [NgbDropdownModule],
   templateUrl: './image-upload.component.html',
   styleUrls: ['./image-upload.component.css']
 })
 export class ImageUploadComponent implements OnDestroy {
   private readonly uploadService = inject(UploadService);
+  private readonly modalService = inject(NgbModal);
 
   @Input() size: 'sm' | 'lg' = 'lg';
   @Input() disabled = false;
@@ -37,6 +44,9 @@ export class ImageUploadComponent implements OnDestroy {
 
   @Output() changed = new EventEmitter<ImageChange>();
 
+  @ViewChild('fileInput') private fileInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('captureInput') private captureInput?: ElementRef<HTMLInputElement>;
+
   readonly accept = this.uploadService.ACCEPTED_TYPES.join(',');
 
   savedUrl = signal<string | null>(null);
@@ -47,6 +57,16 @@ export class ImageUploadComponent implements OnDestroy {
   errorMessage = signal<string | null>(null);
 
   private subscription: Subscription | null = null;
+  private previewRef: NgbModalRef | null = null;
+
+  private previewStatus = computed<ImagePreviewStatus | null>(() => {
+    switch (this.state()) {
+      case 'idle': return this.savedUrl() ? 'saved' : null;
+      case 'removed': return null;
+      case 'failed': return this.localPreview() ? 'failed' : null;
+      default: return this.state() as ImagePreviewStatus;
+    }
+  });
 
   get displayUrl(): string | null {
     switch (this.state()) {
@@ -61,6 +81,10 @@ export class ImageUploadComponent implements OnDestroy {
     return this.state() === 'uploading' || this.state() === 'processing';
   }
 
+  get canPreview(): boolean {
+    return this.previewStatus() !== null;
+  }
+
   get canRemove(): boolean {
     return !this.disabled && !this.isBusy && this.displayUrl !== null;
   }
@@ -70,12 +94,34 @@ export class ImageUploadComponent implements OnDestroy {
     return !this.disabled && this.state() !== 'idle';
   }
 
+  // --- ORIGEN DE LA IMAGEN ---
+
+  chooseFile(): void {
+    this.fileInput?.nativeElement.click();
+  }
+
+  takePhoto(): void {
+    // Sin getUserMedia (p. ej. sin HTTPS) se usa la cámara del sistema; el click debe ser síncrono
+    if (!CameraCaptureComponent.isSupported()) {
+      this.captureInput?.nativeElement.click();
+      return;
+    }
+
+    const ref = this.modalService.open(CameraCaptureComponent, { centered: true, size: 'lg' });
+    ref.result.then(
+      (result: CameraCaptureResult) => this.handleFile(result.file),
+      () => {}
+    );
+  }
+
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
-    if (!file) return;
+    if (file) this.handleFile(file);
+  }
 
+  private handleFile(file: File): void {
     const validationError = this.uploadService.validateFile(file);
     this.cancelUpload();
     this.setLocalPreview(file);
@@ -119,8 +165,28 @@ export class ImageUploadComponent implements OnDestroy {
     });
   }
 
-  remove(event: Event): void {
-    event.stopPropagation();
+  // --- VISTA AMPLIADA ---
+
+  openPreview(): void {
+    if (!this.canPreview) return;
+
+    const source: ImagePreviewSource = {
+      label: this.label,
+      status: computed(() => this.previewStatus() ?? 'saved'),
+      savedUrl: this.savedUrl,
+      originalUrl: this.localPreview,
+      processedUrl: this.readyPreview,
+      error: this.errorMessage
+    };
+
+    this.previewRef = this.modalService.open(ImagePreviewComponent, { centered: true, size: 'xl' });
+    this.previewRef.componentInstance.source = source;
+    this.previewRef.result.finally(() => (this.previewRef = null)).catch(() => {});
+  }
+
+  // --- ACCIONES ---
+
+  remove(): void {
     this.cancelUpload();
     this.clearPreviews();
     this.errorMessage.set(null);
@@ -135,8 +201,7 @@ export class ImageUploadComponent implements OnDestroy {
     }
   }
 
-  undo(event: Event): void {
-    event.stopPropagation();
+  undo(): void {
     this.reset();
     this.changed.emit({ status: 'unchanged' });
   }
@@ -177,6 +242,8 @@ export class ImageUploadComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    // La vista ampliada lee las signals de este componente: se cierra con él
+    this.previewRef?.dismiss();
     this.cancelUpload();
     this.revokeLocalPreview();
   }

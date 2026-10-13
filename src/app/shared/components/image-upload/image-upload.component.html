@@ -1,14 +1,16 @@
-<div class="image-upload" [class.image-upload-sm]="size === 'sm'">
+<div ngbDropdown container="body" placement="bottom-start bottom-end top-start" class="image-upload" [class.image-upload-sm]="size === 'sm'">
+  <!-- Al pulsar la imagen se elige qué hacer: ver, subir archivo o tomar fotografía -->
   <button
     type="button"
     class="image-box rounded border bg-black bg-opacity-25 d-flex align-items-center justify-content-center text-secondary p-0"
-    [class.border-secondary]="state() !== 'failed' && state() !== 'ready'"
+    [class.border-secondary]="state() !== 'failed' && state() !== 'ready' && state() !== 'removed'"
     [class.border-danger]="state() === 'failed'"
     [class.border-success]="state() === 'ready'"
-    [disabled]="disabled || isBusy"
-    [title]="errorMessage() ?? (disabled ? label : 'Seleccionar ' + label.toLowerCase())"
-    [attr.aria-label]="'Seleccionar ' + label.toLowerCase()"
-    (click)="fileInput.click()"
+    [class.border-warning]="state() === 'removed'"
+    [disabled]="disabled && !canPreview"
+    [title]="errorMessage() ?? label"
+    [attr.aria-label]="label + ': opciones de imagen'"
+    ngbDropdownToggle
   >
     @if (displayUrl; as url) {
       <img [src]="url" [alt]="label" class="w-100 h-100 rounded object-fit-cover" [class.opacity-50]="isBusy || state() === 'failed'">
@@ -36,23 +38,38 @@
     }
   </button>
 
-  <!-- Acciones -->
-  @if (canRemove || canUndo) {
-    <div class="image-actions">
+  <div ngbDropdownMenu class="dropdown-menu-dark">
+    @if (canPreview) {
+      <button type="button" ngbDropdownItem (click)="openPreview()">
+        <i class="bi bi-zoom-in me-2 text-info"></i> Ver imagen
+      </button>
+    }
+    @if (!disabled) {
+      <button type="button" ngbDropdownItem (click)="chooseFile()">
+        <i class="bi bi-upload me-2"></i> Subir archivo
+      </button>
+      <button type="button" ngbDropdownItem (click)="takePhoto()">
+        <i class="bi bi-camera-fill me-2"></i> Tomar fotografía
+      </button>
+      @if (canUndo || canRemove) {
+        <div class="dropdown-divider"></div>
+      }
       @if (canUndo) {
-        <button type="button" class="btn btn-sm btn-dark border-secondary" title="Descartar cambio" aria-label="Descartar cambio" (click)="undo($event)">
-          <i class="bi bi-arrow-counterclockwise"></i>
+        <button type="button" ngbDropdownItem (click)="undo()">
+          <i class="bi bi-arrow-counterclockwise me-2 text-warning"></i> Descartar cambio
         </button>
       }
       @if (canRemove) {
-        <button type="button" class="btn btn-sm btn-danger" title="Quitar imagen" aria-label="Quitar imagen" (click)="remove($event)">
-          <i class="bi bi-x-lg"></i>
+        <button type="button" ngbDropdownItem class="text-danger" (click)="remove()">
+          <i class="bi bi-trash-fill me-2"></i> Quitar imagen
         </button>
       }
-    </div>
-  }
+    }
+  </div>
 
   <input #fileInput type="file" class="d-none" [accept]="accept" (change)="onFileSelected($event)">
+  <!-- Cámara del sistema (móvil) cuando el navegador no permite la cámara en vivo -->
+  <input #captureInput type="file" class="d-none" accept="image/*" capture="environment" (change)="onFileSelected($event)">
 </div>
 
 @if (size === 'lg') {

@@ -1,0 +1,63 @@
+<div class="modal-header bg-dark text-light border-secondary">
+  <h5 class="modal-title fw-bold">
+    <i class="bi bi-image me-2"></i> {{ source.label }}
+  </h5>
+  <button type="button" class="btn-close btn-close-white" aria-label="Cerrar" (click)="modal.dismiss()"></button>
+</div>
+
+<div class="modal-body bg-dark text-light">
+  @if (source.status() === 'saved') {
+    <!-- Imagen guardada -->
+    <div class="preview-frame rounded border border-secondary bg-black">
+      @if (source.savedUrl(); as url) {
+        <img [src]="url" [alt]="source.label" class="preview-media">
+      }
+    </div>
+  } @else {
+    <!-- Subida en curso: original y procesada -->
+    <div class="row g-3">
+      <div class="col-12 col-md-6">
+        <h6 class="small text-secondary text-uppercase fw-bold mb-2">Original</h6>
+        <div class="preview-frame rounded border border-secondary bg-black">
+          @if (source.originalUrl(); as url) {
+            <img [src]="url" alt="Imagen original" class="preview-media">
+          }
+        </div>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <h6 class="small text-secondary text-uppercase fw-bold mb-2">Procesada</h6>
+        <div
+          class="preview-frame rounded border bg-black d-flex align-items-center justify-content-center"
+          [class.border-secondary]="source.status() !== 'ready' && source.status() !== 'failed'"
+          [class.border-success]="source.status() === 'ready'"
+          [class.border-danger]="source.status() === 'failed'"
+        >
+          @switch (source.status()) {
+            @case ('ready') {
+              @if (source.processedUrl(); as url) {
+                <img [src]="url" alt="Imagen procesada" class="preview-media">
+              }
+            }
+            @case ('failed') {
+              <div class="text-center p-4">
+                <i class="bi bi-exclamation-triangle-fill text-danger display-6 d-block mb-2"></i>
+                <p class="small mb-0">{{ source.error() }}</p>
+              </div>
+            }
+            @default {
+              <div class="text-center text-secondary">
+                <div class="spinner-border text-primary mb-2" role="status"></div>
+                <div class="small">{{ source.status() === 'uploading' ? 'Subiendo...' : 'Procesando...' }}</div>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<div class="modal-footer bg-dark border-secondary">
+  <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">Cerrar</button>
+</div>

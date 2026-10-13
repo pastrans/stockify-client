@@ -1,0 +1,91 @@
+<div class="modal-header bg-dark text-light border-secondary">
+  <h5 class="modal-title fw-bold">
+    <i class="bi bi-camera-fill me-2"></i> Tomar fotografía
+  </h5>
+  <button type="button" class="btn-close btn-close-white" aria-label="Cerrar" (click)="modal.dismiss()"></button>
+</div>
+
+<div class="modal-body bg-dark text-light">
+  <div class="camera-frame rounded border border-secondary bg-black d-flex align-items-center justify-content-center">
+    <!-- El video está siempre en el DOM (oculto si no hay cámara en vivo) para conectarle el stream sin esperar al render -->
+    <video
+      #video
+      class="camera-media"
+      [hidden]="state() !== 'live'"
+      autoplay
+      playsinline
+      muted
+      (loadeddata)="onVideoFrame()"
+      (playing)="onVideoFrame()"
+      (resize)="onVideoFrame()"
+    ></video>
+
+    @switch (state()) {
+      @case ('starting') {
+        <div class="text-secondary text-center">
+          <div class="spinner-border text-primary mb-2" role="status"></div>
+          <div class="small">Iniciando cámara...</div>
+        </div>
+      }
+      @case ('captured') {
+        <img [src]="capturedUrl()" alt="Foto tomada" class="camera-media">
+      }
+      @case ('error') {
+        <div class="text-center p-4">
+          <i class="bi bi-camera-video-off text-warning display-6 d-block mb-2"></i>
+          <p class="small mb-0">{{ errorMessage() }}</p>
+        </div>
+      }
+    }
+  </div>
+</div>
+
+<div class="modal-footer bg-dark border-secondary">
+  @switch (state()) {
+    @case ('live') {
+      @if (cameras().length > 1) {
+        <button
+          type="button"
+          class="btn btn-outline-secondary me-auto text-truncate"
+          [title]="'Cámara actual: ' + currentCameraLabel()"
+          [disabled]="isCapturing()"
+          (click)="switchCamera()"
+        >
+          <i class="bi bi-arrow-repeat me-1"></i> Cambiar cámara
+        </button>
+      }
+      <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">Cancelar</button>
+      <button
+        type="button"
+        class="btn btn-primary px-4 d-flex align-items-center gap-2"
+        [disabled]="!isVideoReady() || isCapturing()"
+        (click)="capture()"
+      >
+        @if (!isVideoReady() || isCapturing()) {
+          <span class="spinner-border spinner-border-sm" role="status"></span>
+        } @else {
+          <i class="bi bi-camera"></i>
+        }
+        {{ isVideoReady() ? 'Capturar' : 'Preparando...' }}
+      </button>
+    }
+    @case ('captured') {
+      <button type="button" class="btn btn-outline-secondary" (click)="retake()">
+        <i class="bi bi-arrow-counterclockwise me-1"></i> Repetir
+      </button>
+      <button type="button" class="btn btn-primary px-4" (click)="usePhoto()">
+        <i class="bi bi-check-lg me-1"></i> Usar foto
+      </button>
+    }
+    @case ('error') {
+      <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">Cancelar</button>
+      <label class="btn btn-primary mb-0">
+        <i class="bi bi-phone me-1"></i> Usar la cámara del sistema
+        <input type="file" class="d-none" accept="image/*" capture="environment" (change)="onSystemCapture($event)">
+      </label>
+    }
+    @default {
+      <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">Cancelar</button>
+    }
+  }
+</div>
