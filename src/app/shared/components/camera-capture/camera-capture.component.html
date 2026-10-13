@@ -38,12 +38,24 @@
       }
     }
   </div>
+
+  @if (state() === 'live' && cameras().length > 0) {
+    <div class="small text-secondary mt-2 text-truncate">
+      <i class="bi bi-camera-video me-1"></i> {{ currentCameraLabel() }}
+    </div>
+  }
+  @if (notice()) {
+    <div class="alert alert-warning small py-2 mt-2 mb-0 d-flex gap-2" role="alert">
+      <i class="bi bi-exclamation-triangle"></i>
+      <span>{{ notice() }}</span>
+    </div>
+  }
 </div>
 
 <div class="modal-footer bg-dark border-secondary">
   @switch (state()) {
     @case ('live') {
-      @if (cameras().length > 1) {
+      @if (canSwitchCamera()) {
         <button
           type="button"
           class="btn btn-outline-secondary me-auto text-truncate"
@@ -78,7 +90,15 @@
       </button>
     }
     @case ('error') {
+      @if (canSwitchCamera()) {
+        <button type="button" class="btn btn-outline-secondary me-auto" (click)="switchCamera()">
+          <i class="bi bi-arrow-repeat me-1"></i> Cambiar cámara
+        </button>
+      }
       <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">Cancelar</button>
+      <button type="button" class="btn btn-outline-primary" (click)="retryCamera()">
+        <i class="bi bi-arrow-clockwise me-1"></i> Reintentar
+      </button>
       <label class="btn btn-primary mb-0">
         <i class="bi bi-phone me-1"></i> Usar la cámara del sistema
         <input type="file" class="d-none" accept="image/*" capture="environment" (change)="onSystemCapture($event)">

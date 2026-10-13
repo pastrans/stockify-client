@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 type CameraState = 'starting' | 'live' | 'captured' | 'error';
@@ -43,7 +43,19 @@ export class CameraCaptureComponent implements OnInit, OnDestroy {
 
   private stream: MediaStream | null = null;
   private currentDeviceId: string | null = null;
+  private requestedDeviceId: string | undefined;
+  // Última cámara que abrió bien y cámaras que no se pudieron abrir en este modal
+  private lastWorkingDeviceId: string | null = null;
+  private unavailableDeviceIds = new Set<string>();
+  // Aviso cuando se tuvo que volver a la cámara anterior
+  notice = signal<string | null>(null);
   private capturedBlob: Blob | null = null;
+
+  // Cada apertura de cámara tiene un número: solo la más reciente puede quedarse con la stream
+  private startRequest = 0;
+  // Reintentos si la cámara aparece ocupada justo al cambiar (espera de 0.5 s y 1 s)
+  private readonly BUSY_RETRIES = 2;
+  private readonly BUSY_RETRY_DELAY_MS = 500;
 
   // Siempre presente en la plantilla: se puede usar desde ngOnInit
   @ViewChild('video', { static: true }) private videoRef!: ElementRef<HTMLVideoElement>;
@@ -57,14 +69,20 @@ export class CameraCaptureComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Comprobación periódica de que el video ya tiene imagen. Los eventos del <video> no siempre
-   * llegan a refrescar la vista del modal; este temporizador lo garantiza y se detiene al estar lista.
+   * Mientras el modal está abierto se revisa la cámara y se refresca la vista cada REFRESH_MS.
+   * Comprobado en pruebas: sin este refresco continuo los cambios de la cámara (imagen lista,
+   * captura, foto tomada) no siempre llegan a la pantalla. Detenerlo al estar lista rompe la captura.
    */
-  private readinessTimer: ReturnType<typeof setInterval> | null = null;
-  private readonly READINESS_CHECK_MS = 250;
+  private readonly cdr = inject(ChangeDetectorRef);
+  private refreshTimer: ReturnType<typeof setInterval> | null = null;
+  private readonly REFRESH_MS = 500;
 
   ngOnInit(): void {
     this.startCamera();
+    this.refreshTimer = setInterval(() => {
+      this.onVideoFrame();
+      this.cdr.detectChanges();
+    }, this.REFRESH_MS);
   }
 
   /**
@@ -72,31 +90,79 @@ export class CameraCaptureComponent implements OnInit, OnDestroy {
    * En computadoras `facingMode` se ignora: para cambiar de cámara se usa el deviceId.
    */
   private async startCamera(deviceId?: string): Promise<void> {
+    const request = ++this.startRequest;
+    this.requestedDeviceId = deviceId;
     this.stopCamera();
     this.state.set('starting');
     this.isVideoReady.set(false);
     this.errorMessage.set(null);
 
-    const size = { width: { ideal: this.IDEAL_SIZE }, height: { ideal: this.IDEAL_SIZE } };
-
     try {
-      this.stream = await navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video: deviceId
-          ? { deviceId: { exact: deviceId }, ...size }
-          : { facingMode: { ideal: 'environment' }, ...size }
-      });
-      this.currentDeviceId = this.stream.getVideoTracks()[0]?.getSettings().deviceId ?? deviceId ?? null;
-      this.attachStream(this.stream);
+      const stream = await this.openStream(deviceId);
+
+      // Si mientras tanto se pidió otra cámara o se cerró el modal, esta stream sobra:
+      // se detiene para no dejar la cámara ocupada
+      if (request !== this.startRequest) {
+        stream.getTracks().forEach(track => track.stop());
+        return;
+      }
+
+      this.stream = stream;
+      this.currentDeviceId = stream.getVideoTracks()[0]?.getSettings().deviceId ?? deviceId ?? null;
+      this.lastWorkingDeviceId = this.currentDeviceId;
+      if (this.currentDeviceId) this.unavailableDeviceIds.delete(this.currentDeviceId);
+      this.attachStream(stream);
       this.state.set('live');
 
       // Los nombres e ids de las cámaras solo están disponibles después de dar permiso
       const devices = await navigator.mediaDevices.enumerateDevices();
       this.cameras.set(devices.filter(d => d.kind === 'videoinput'));
     } catch (error) {
+      if (request !== this.startRequest) return;
+
+      // Al cambiar a una cámara que no se puede abrir (p. ej. la infrarroja de Windows Hello),
+      // se vuelve a la que funcionaba y se la salta en los siguientes cambios
+      if (deviceId && this.lastWorkingDeviceId && deviceId !== this.lastWorkingDeviceId) {
+        this.unavailableDeviceIds.add(deviceId);
+        this.notice.set(
+          `No se pudo abrir "${this.cameraLabel(deviceId)}": ${this.describeError(error)} Se volvió a la cámara anterior.`
+        );
+        this.startCamera(this.lastWorkingDeviceId);
+        return;
+      }
+
       this.state.set('error');
       this.errorMessage.set(this.describeError(error));
     }
+  }
+
+  /**
+   * En Windows la cámara recién detenida tarda unos instantes en liberarse y getUserMedia
+   * responde NotReadableError ("en uso"): se reintenta con una espera creciente.
+   */
+  private async openStream(deviceId?: string): Promise<MediaStream> {
+    const size = { width: { ideal: this.IDEAL_SIZE }, height: { ideal: this.IDEAL_SIZE } };
+    const constraints: MediaStreamConstraints = {
+      audio: false,
+      video: deviceId
+        ? { deviceId: { exact: deviceId }, ...size }
+        : { facingMode: { ideal: 'environment' }, ...size }
+    };
+
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (error) {
+        const busy = error instanceof DOMException && error.name === 'NotReadableError';
+        if (!busy || attempt >= this.BUSY_RETRIES) throw error;
+        await new Promise(resolve => setTimeout(resolve, this.BUSY_RETRY_DELAY_MS * (attempt + 1)));
+      }
+    }
+  }
+
+  // Vuelve a intentar abrir la última cámara pedida (desde el estado de error)
+  retryCamera(): void {
+    this.startCamera(this.requestedDeviceId);
   }
 
   private describeError(error: unknown): string {
@@ -121,36 +187,47 @@ export class CameraCaptureComponent implements OnInit, OnDestroy {
     video.play().then(() => this.onVideoFrame()).catch(() => {
       // Si el navegador bloquea play(), `autoplay` lo reintenta al tener datos
     });
-
-    this.stopReadinessCheck();
-    this.readinessTimer = setInterval(() => this.onVideoFrame(), this.READINESS_CHECK_MS);
   }
 
-  // Eventos del video (loadeddata, playing, resize) y la comprobación periódica
+  // Eventos del video (loadeddata, playing, resize) y el refresco periódico
   onVideoFrame(): void {
     if (this.stream && this.videoElement.videoWidth > 0) {
       this.isVideoReady.set(true);
-      this.stopReadinessCheck();
     }
   }
 
-  private stopReadinessCheck(): void {
-    if (this.readinessTimer) clearInterval(this.readinessTimer);
-    this.readinessTimer = null;
+  cameraLabel(deviceId: string | null | undefined): string {
+    const cameras = this.cameras();
+    const index = cameras.findIndex(c => c.deviceId === deviceId);
+    if (index === -1) return 'Cámara';
+    return cameras[index].label || `Cámara ${index + 1}`;
   }
 
   currentCameraLabel(): string {
-    const cameras = this.cameras();
-    const index = cameras.findIndex(c => c.deviceId === this.currentDeviceId);
-    return cameras[index]?.label || `Cámara ${index + 1}`;
+    return this.cameraLabel(this.currentDeviceId);
   }
 
-  // Pasa a la siguiente cámara de la lista
+  // Cámaras a las que se puede cambiar: las demás, sin las que ya fallaron
+  private switchableCameras(): MediaDeviceInfo[] {
+    return this.cameras().filter(c => c.deviceId !== this.currentDeviceId && !this.unavailableDeviceIds.has(c.deviceId));
+  }
+
+  canSwitchCamera(): boolean {
+    return this.switchableCameras().length > 0;
+  }
+
+  // Pasa a la siguiente cámara de la lista que no haya fallado
   switchCamera(): void {
     const cameras = this.cameras();
-    if (cameras.length < 2) return;
-    const index = cameras.findIndex(c => c.deviceId === this.currentDeviceId);
-    const next = cameras[(index + 1) % cameras.length];
+    const candidates = this.switchableCameras();
+    if (candidates.length === 0) return;
+
+    // Si la última apertura falló, se avanza desde la cámara que se intentó abrir
+    const from = this.state() === 'error' ? this.requestedDeviceId ?? this.currentDeviceId : this.currentDeviceId;
+    const start = cameras.findIndex(c => c.deviceId === from);
+    const next = [...cameras.slice(start + 1), ...cameras.slice(0, start + 1)].find(c => candidates.includes(c))!;
+
+    this.notice.set(null);
     this.startCamera(next.deviceId);
   }
 
@@ -228,7 +305,6 @@ export class CameraCaptureComponent implements OnInit, OnDestroy {
   }
 
   private stopCamera(): void {
-    this.stopReadinessCheck();
     this.stream?.getTracks().forEach(track => track.stop());
     this.stream = null;
     if (this.videoElement) this.videoElement.srcObject = null;
@@ -241,7 +317,9 @@ export class CameraCaptureComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.stopReadinessCheck();
+    if (this.refreshTimer) clearInterval(this.refreshTimer);
+    // Invalida una apertura en curso: su stream se detendrá en cuanto llegue
+    this.startRequest++;
     this.stopCamera();
     this.revokeCaptured();
   }
