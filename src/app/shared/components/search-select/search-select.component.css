@@ -1,0 +1,30 @@
+:host {
+  display: block;
+}
+
+/* El botón usa el aspecto de .form-select: sin el caret de .dropdown-toggle */
+.select-toggle::after {
+  display: none;
+}
+
+.select-toggle {
+  min-height: calc(1.5em + 0.5rem + 2px);
+}
+
+.select-menu {
+  min-width: 260px;
+}
+
+.select-options {
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.color-dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}

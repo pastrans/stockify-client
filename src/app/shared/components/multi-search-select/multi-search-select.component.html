@@ -1,0 +1,101 @@
+<div ngbDropdown container="body" autoClose="outside" placement="bottom-start bottom-end top-start" (openChange)="onOpenChange($event)">
+  <button
+    type="button"
+    class="form-select select-toggle text-start d-flex align-items-center gap-2"
+    [class.form-select-sm]="size === 'sm'"
+    [class.is-invalid]="invalid"
+    [id]="inputId"
+    [disabled]="disabled"
+    ngbDropdownToggle
+  >
+    <span class="text-secondary text-truncate">{{ placeholder }}</span>
+    @if (values.length > 0) {
+      <span class="badge bg-primary ms-auto">{{ values.length }}</span>
+    }
+  </button>
+
+  <div ngbDropdownMenu class="dropdown-menu-dark select-menu p-0" [style.width.px]="menuWidth">
+    <div class="p-2 border-bottom border-secondary">
+      <input
+        #searchInput
+        type="search"
+        class="form-control form-control-sm"
+        [placeholder]="searchPlaceholder"
+        [value]="term"
+        (input)="onSearch($event)"
+        (keydown.enter)="toggleFirst($event)"
+      >
+    </div>
+    @if (loading) {
+      <div class="dropdown-item-text small text-secondary d-flex align-items-center gap-2 border-bottom border-secondary">
+        <span class="spinner-border spinner-border-sm" role="status"></span> Actualizando...
+      </div>
+    }
+    <div class="select-options py-1">
+      @for (option of filtered; track option.value) {
+        <button
+          type="button"
+          ngbDropdownItem
+          class="d-flex align-items-center gap-2"
+          role="menuitemcheckbox"
+          [attr.aria-checked]="isSelected(option)"
+          [disabled]="!!option.disabled"
+          [title]="option.disabledReason ?? ''"
+          (click)="toggle(option)"
+        >
+          <i
+            class="bi"
+            [class.bi-check-square-fill]="isSelected(option)"
+            [class.text-primary]="isSelected(option)"
+            [class.bi-square]="!isSelected(option)"
+          ></i>
+          @if (option.colorHex) {
+            <span class="color-dot" [style.background-color]="option.colorHex"></span>
+          }
+          <span class="text-truncate">{{ option.label }}</span>
+          @if (option.hint) {
+            <span class="font-monospace small opacity-75">{{ option.hint }}</span>
+          }
+          @if (option.disabled) {
+            <i class="bi bi-lock-fill text-warning ms-auto"></i>
+          }
+        </button>
+      } @empty {
+        <span class="dropdown-item-text small text-secondary">{{ emptyText }}</span>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Opciones elegidas -->
+<div class="d-flex flex-wrap gap-1 mt-2">
+  @for (option of selectedOptions; track option.value) {
+    <span
+      class="badge bg-secondary-subtle text-light border d-inline-flex align-items-center gap-1"
+      [class.border-secondary]="!option.disabled"
+      [class.border-warning]="option.disabled"
+    >
+      @if (option.colorHex) {
+        <span class="color-dot" [style.background-color]="option.colorHex"></span>
+      }
+      {{ option.label }}
+      @if (option.hint) {
+        <span class="font-monospace text-secondary">{{ option.hint }}</span>
+      }
+      @if (option.disabled) {
+        <i class="bi bi-lock-fill text-warning" [title]="option.disabledReason ?? ''"></i>
+      } @else if (!disabled) {
+        <button
+          type="button"
+          class="btn-close btn-close-white chip-remove"
+          [attr.aria-label]="'Quitar ' + option.label"
+          (click)="remove(option)"
+        ></button>
+      }
+    </span>
+  } @empty {
+    @if (emptySelectionText) {
+      <span class="text-secondary small">{{ emptySelectionText }}</span>
+    }
+  }
+</div>
