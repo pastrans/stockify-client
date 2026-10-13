@@ -14,7 +14,7 @@ SPA en Angular para **Stockify**: digitalización de inventario retail (catálog
 ## Convenciones
 
 - Los nombres de carpetas y archivos van en inglés: `features/<feature>/`, `core/services/<x>.service.ts`, `shared/models/<x>.model.ts`.
-- `core/`: guards (`AuthGuard`, `PublicGuard`), `authInterceptor` (Bearer token) y servicios. `shared/`: `main-layout` (menú horizontal superior), `sequence-input` (campo de secuencia con botones ±), modelos, `AppValidators` y `utils/api-error.ts`.
+- `core/`: guards (`AuthGuard`, `PublicGuard`), `authInterceptor` (Bearer token) y servicios. `shared/`: `main-layout` (menú horizontal superior), `sequence-input` (campo de secuencia con botones ±), `image-upload` (subida y seguimiento de imágenes), `search-select` y `multi-search-select` (selects con buscador que funcionan como controles reactivos y reciben `SelectOption[]`; emiten `(opened)` para recargar el catálogo al abrirse, con `[loading]` mientras tanto; usarlos en lugar de `<select>` cuando la lista es larga), modelos, `AppValidators` y `utils/api-error.ts`.
 - Estado con Angular Signals (`signal`, `computed`), Reactive Forms e `inject()` en lugar de constructor.
 - Rol fijo `'ADMIN'` en los formularios de usuario. No existe `role.guard`.
 - Las rutas públicas cuelgan de `/auth/*` (`/auth/login`, `/auth/reset-password`). Las redirecciones de sesión van a `/auth/login`, nunca a `/login`.
@@ -31,9 +31,11 @@ SPA en Angular para **Stockify**: digitalización de inventario retail (catálog
 | `attributes` | CRUD; valores: `POST /:id/values`, `PUT/DELETE /values/:valueId` |
 | `pos-categories` | CRUD (jerarquía con `parentId`, `color` como int de Odoo, `sequence`) |
 | `products` | CRUD de plantillas; `PATCH /sync` (`productId` o `productIds`); `PATCH /:id/unsync`; variantes: `PUT/DELETE /variants/:variantId`, `PATCH /variants/:variantId/stock` |
-| `uploads` | `POST /image` (multipart, campo de archivo único; `folder` ∈ `products`, `categories`, `users`; S3 con nombre UUID) |
+| `uploads` | `POST /image` (multipart, campo `file`; JPG/PNG/WebP ≤ 5 MB) → `{ uploadId, key, status: 'processing' }`; `GET /:uploadId` → `processing`, `ready` (con `previewUrl`, válida 15 min) o `failed` (con `error`) |
 
 Los errores llegan como `{ error: string }` (mensaje en inglés), con 400 para las reglas de negocio. Se leen con `getApiErrorMessage(err, fallback)` (`shared/utils/api-error.ts`), que también acepta `{ message }` y traduce al español los mensajes de negocio conocidos. Los mensajes nuevos que necesiten traducción se añaden ahí.
+
+Imágenes de producto y variante: se suben primero a `uploads` y el formulario envía `mainImageUploadId` / `imageUploadId` (`null` para quitarla) solo cuando la subida está `ready`. "Guardar" se deshabilita mientras la imagen está `processing` o `failed`. Para mostrar imágenes guardadas se usa `mainImageUrl` / `imageUrl`, nunca la key.
 
 ## Reglas de dominio que la UI debe respetar
 
