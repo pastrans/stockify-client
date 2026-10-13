@@ -1,0 +1,13 @@
+.nav-tabs .nav-link {
+  color: var(--bs-secondary-color);
+}
+
+.nav-tabs .nav-link.active {
+  color: var(--bs-emphasis-color);
+  background-color: var(--bs-dark-bg-subtle);
+  border-color: var(--bs-secondary) var(--bs-secondary) var(--bs-dark-bg-subtle);
+}
+
+.nav-tabs .nav-link:disabled {
+  color: var(--bs-tertiary-color);
+}

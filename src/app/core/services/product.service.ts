@@ -2,7 +2,16 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Product, ProductFilters, ProductsListResponse } from '../../shared/models/product.model';
+import {
+  CreateProductRequest,
+  Product,
+  ProductFilters,
+  ProductVariant,
+  ProductsListResponse,
+  UpdateProductRequest,
+  UpdateVariantRequest,
+  UpdateVariantStockRequest
+} from '../../shared/models/product.model';
 
 @Injectable({
   providedIn: 'root'
@@ -37,7 +46,25 @@ export class ProductService {
     return this.http.get<Product>(`${this.apiUrl}/${id}`);
   }
 
+  createProduct(data: CreateProductRequest): Observable<Product> {
+    return this.http.post<Product>(this.apiUrl, data);
+  }
+
+  updateProduct(id: number, data: UpdateProductRequest): Observable<Product> {
+    return this.http.put<Product>(`${this.apiUrl}/${id}`, data);
+  }
+
   deleteProduct(id: number): Observable<Product> {
     return this.http.delete<Product>(`${this.apiUrl}/${id}`);
+  }
+
+  // --- Variantes y existencias ---
+
+  updateVariant(variantId: number, data: UpdateVariantRequest): Observable<ProductVariant> {
+    return this.http.put<ProductVariant>(`${this.apiUrl}/variants/${variantId}`, data);
+  }
+
+  updateVariantStock(variantId: number, data: UpdateVariantStockRequest): Observable<ProductVariant> {
+    return this.http.patch<ProductVariant>(`${this.apiUrl}/variants/${variantId}/stock`, data);
   }
 }

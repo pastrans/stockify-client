@@ -1,0 +1,4 @@
+/* Marca las filas con cambios sin guardar */
+.row-changed > td:first-child {
+  box-shadow: inset 3px 0 0 var(--bs-warning);
+}

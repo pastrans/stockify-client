@@ -83,7 +83,7 @@
     <div class="card-body pt-0 pb-3" [formGroup]="filtersForm">
       <div class="row g-2 align-items-end">
         <!-- Búsqueda por nombre o prefijo SKU -->
-        <div class="col-12 col-lg-5">
+        <div class="col-12 col-lg">
           <label for="search" class="form-label small text-secondary mb-1">Buscar</label>
           <div class="input-group input-group-sm">
             <span class="input-group-text"><i class="bi bi-search"></i></span>
@@ -119,16 +119,15 @@
           </select>
         </div>
 
-        <div class="col-12 col-lg-1 d-grid">
+        <!-- En móvil ocupa el ancho completo y se separa de los filtros; en escritorio va al lado -->
+        <div class="col-12 col-lg-auto d-grid d-lg-block mt-3 mt-lg-0">
           <button
             type="button"
             class="btn btn-sm btn-outline-secondary"
-            title="Limpiar filtros"
-            aria-label="Limpiar filtros"
             [disabled]="!hasExtraFilters()"
             (click)="clearFilters()"
           >
-            <i class="bi bi-x-lg"></i>
+            <i class="bi bi-x-circle me-1"></i> Limpiar filtros
           </button>
         </div>
       </div>

@@ -24,27 +24,33 @@
       </div>
     </div>
   } @else {
-    <!-- Encabezado -->
-    <div class="d-flex flex-wrap align-items-center gap-2 mb-4">
-      <h2 class="fw-bold mb-0">
-        @if (isEditMode()) {
-          Editar Producto
-        } @else {
-          Nuevo Producto
-        }
-      </h2>
-      @if (status(); as current) {
-        <span class="badge px-2 py-1" [class]="current.badgeClass">
-          <i class="bi me-1" [class]="current.icon"></i> {{ current.label }}
-        </span>
-      }
-      @if (product(); as current) {
-        @if (!current.available) {
-          <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
-            <i class="bi bi-dot"></i> Inactivo
+    <!-- Encabezado y Acciones -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <h2 class="fw-bold mb-0">
+          @if (isEditMode()) {
+            Editar Producto
+          } @else {
+            Nuevo Producto
+          }
+        </h2>
+        @if (status(); as current) {
+          <span class="badge px-2 py-1" [class]="current.badgeClass">
+            <i class="bi me-1" [class]="current.icon"></i> {{ current.label }}
           </span>
         }
-      }
+        @if (product(); as current) {
+          @if (!current.available) {
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+              <i class="bi bi-dot"></i> Inactivo
+            </span>
+          }
+        }
+      </div>
+      <!-- En pantallas pequeñas las acciones van al final del formulario -->
+      <div class="d-none d-md-flex gap-2">
+        <ng-container *ngTemplateOutlet="formActions"></ng-container>
+      </div>
     </div>
 
     <!-- Alerta de Error -->
@@ -55,12 +61,237 @@
       </div>
     }
 
-    <!-- Contenido del formulario: pendiente de la siguiente iteración -->
-    <div class="card shadow-sm border-secondary bg-dark-subtle">
-      <div class="card-body text-center text-secondary py-5">
-        <i class="bi bi-tools display-6 d-block mb-2"></i>
-        El formulario de producto está en construcción.
+    <!-- Ficha base: nombre, prefijo SKU e imagen principal -->
+    <div class="card shadow-sm border-secondary bg-dark-subtle mb-4" [formGroup]="productForm">
+      <div class="card-body">
+        <div class="row g-3 align-items-start">
+          <div class="col-12 col-md">
+            <div class="mb-3">
+              <label for="name" class="form-label small fw-semibold">Nombre del Producto</label>
+              <input
+                type="text"
+                id="name"
+                class="form-control form-control-lg fw-semibold"
+                formControlName="name"
+                placeholder="Ej. Zapato Deportivo Casual"
+                [class.is-invalid]="isInvalid('name')"
+              >
+              @if (isInvalid('name')) {
+                <div class="invalid-feedback">El nombre es requerido (mín. 2 caracteres).</div>
+              }
+            </div>
+
+            <div class="row g-2">
+              <div class="col-12 col-sm-6 col-lg-4">
+                <label for="skuPrefix" class="form-label small fw-semibold">
+                  Prefijo SKU
+                  @if (productForm.controls.skuPrefix.disabled) {
+                    <i class="bi bi-lock-fill text-warning ms-1" title="Bloqueado: el producto tiene existencias o está sincronizado"></i>
+                  }
+                </label>
+                <input
+                  type="text"
+                  id="skuPrefix"
+                  class="form-control font-monospace text-uppercase"
+                  formControlName="skuPrefix"
+                  placeholder="Ej. DEP-01"
+                  [class.is-invalid]="isInvalid('skuPrefix')"
+                >
+                @if (isInvalid('skuPrefix')) {
+                  <div class="invalid-feedback">Requerido. Solo letras, números y guiones intermedios.</div>
+                } @else {
+                  <div class="form-text small">Base del SKU de todas las variantes.</div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Imagen principal -->
+          <div class="col-12 col-md-auto d-flex flex-column align-items-center">
+            <app-image-upload
+              label="Foto principal"
+              [imageUrl]="product()?.mainImageUrl"
+              [disabled]="isSaving()"
+              (changed)="mainImageChange.set($event)"
+            ></app-image-upload>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pestañas -->
+    <ul class="nav nav-tabs border-secondary" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button
+          type="button"
+          class="nav-link"
+          role="tab"
+          [class.active]="activeTab() === 'general'"
+          (click)="activeTab.set('general')"
+        >
+          Información General
+          @if (hasGeneralErrors()) {
+            <i class="bi bi-exclamation-circle-fill text-danger ms-1"></i>
+          }
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button
+          type="button"
+          class="nav-link"
+          role="tab"
+          [class.active]="activeTab() === 'attributes'"
+          (click)="activeTab.set('attributes')"
+        >
+          Atributos
+          @if (attributeLines.length > 0) {
+            <span class="badge bg-secondary ms-1">{{ attributeLines.length }}</span>
+          }
+          @if (hasAttributeErrors()) {
+            <i class="bi bi-exclamation-circle-fill text-danger ms-1"></i>
+          }
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button
+          type="button"
+          class="nav-link"
+          role="tab"
+          [class.active]="activeTab() === 'variants'"
+          [disabled]="!product()"
+          [title]="product() ? '' : 'Guarda el producto para generar sus variantes'"
+          (click)="activeTab.set('variants')"
+        >
+          Variantes y Existencias
+          @if (product(); as current) {
+            <span class="badge bg-secondary ms-1">{{ current.totalVariantsCount }}</span>
+          }
+        </button>
+      </li>
+    </ul>
+
+    <!-- Las pestañas se ocultan (no se destruyen) para conservar los cambios sin guardar -->
+    <div class="card shadow-sm border-secondary border-top-0 rounded-top-0 bg-dark-subtle">
+      <div class="card-body">
+        <!-- PESTAÑA: INFORMACIÓN GENERAL -->
+        <div [hidden]="activeTab() !== 'general'" [formGroup]="productForm">
+          <div class="row g-4">
+            <!-- Precios -->
+            <div class="col-12 col-lg-5">
+              <h6 class="text-secondary small text-uppercase fw-bold mb-3">Precios</h6>
+              <div class="row g-3">
+                <div class="col-6">
+                  <label for="salePrice" class="form-label small fw-semibold">Precio de venta</label>
+                  <div class="input-group has-validation">
+                    <span class="input-group-text">$</span>
+                    <input
+                      type="number"
+                      id="salePrice"
+                      min="0"
+                      step="0.01"
+                      class="form-control font-monospace"
+                      formControlName="salePrice"
+                      [class.is-invalid]="!!priceError('salePrice')"
+                    >
+                    <div class="invalid-feedback">{{ priceError('salePrice') }}</div>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <label for="costPrice" class="form-label small fw-semibold">Precio de costo</label>
+                  <div class="input-group has-validation">
+                    <span class="input-group-text">$</span>
+                    <input
+                      type="number"
+                      id="costPrice"
+                      min="0"
+                      step="0.01"
+                      class="form-control font-monospace"
+                      formControlName="costPrice"
+                      [class.is-invalid]="!!priceError('costPrice') || isCostNotLessThanSale()"
+                    >
+                    <div class="invalid-feedback">{{ priceError('costPrice') ?? 'Debe ser menor que el precio de venta.' }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Categorías POS -->
+            <div class="col-12 col-lg-7">
+              <h6 class="text-secondary small text-uppercase fw-bold mb-3">Categorías de Punto de Venta</h6>
+              <app-multi-search-select
+                formControlName="posCategoryIds"
+                [options]="categoryOptions()"
+                placeholder="Agregar categorías"
+                searchPlaceholder="Buscar categoría..."
+                emptyText="No hay categorías POS habilitadas"
+                emptySelectionText="Sin categorías (opcional)."
+                [loading]="isRefreshingCategories()"
+                (opened)="loadCategories()"
+              ></app-multi-search-select>
+            </div>
+
+            <!-- Descripción -->
+            <div class="col-12">
+              <label for="description" class="form-label small fw-semibold">Descripción</label>
+              <textarea
+                id="description"
+                rows="3"
+                class="form-control"
+                formControlName="description"
+                placeholder="Descripción opcional del producto"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- PESTAÑA: ATRIBUTOS -->
+        <div [hidden]="activeTab() !== 'attributes'">
+          <app-product-attribute-lines
+            [lines]="attributeLines"
+            [attributes]="attributes()"
+            [product]="product()"
+            [skuPrefix]="productForm.controls.skuPrefix.value"
+            [refreshing]="isRefreshingAttributes()"
+            (refresh)="loadAttributes()"
+          ></app-product-attribute-lines>
+        </div>
+
+        <!-- PESTAÑA: VARIANTES Y EXISTENCIAS -->
+        @if (product(); as current) {
+          <div [hidden]="activeTab() !== 'variants'">
+            @if (hasChanges()) {
+              <div class="alert alert-info small py-2 d-flex gap-2" role="alert">
+                <i class="bi bi-info-circle"></i>
+                <span>Hay cambios del producto sin guardar. Las variantes se actualizan al pulsar "Guardar Producto".</span>
+              </div>
+            }
+            <app-product-variants [product]="current" (saved)="onVariantsSaved()"></app-product-variants>
+          </div>
+        }
+
+        <!-- Acciones al final (en la pestaña de variantes, el guardado de existencias tiene las suyas) -->
+        @if (activeTab() !== 'variants') {
+          <div class="d-flex flex-column flex-sm-row justify-content-end gap-2 mt-4 pt-3 border-top border-secondary">
+            <ng-container *ngTemplateOutlet="formActions"></ng-container>
+          </div>
+        }
       </div>
     </div>
   }
 </div>
+
+<ng-template #formActions>
+  <a routerLink="/products" class="btn btn-outline-secondary">Cancelar</a>
+  <button
+    type="button"
+    class="btn btn-primary px-4 d-flex align-items-center justify-content-center gap-2"
+    [disabled]="!canSave()"
+    [title]="isImageBlocking() ? 'Espera a que termine de procesarse la imagen o quítala si falló' : ''"
+    (click)="saveProduct()"
+  >
+    @if (isSaving()) {
+      <span class="spinner-border spinner-border-sm" role="status"></span>
+    }
+    <span>Guardar Producto</span>
+  </button>
+</ng-template>

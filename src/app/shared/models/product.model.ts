@@ -8,6 +8,8 @@ export interface ProductVariant {
   sku: string;
   displayName: string;
   barcode: string;
+  imageKey: string | null;
+  // URL pública derivada de imageKey: es la que se muestra
   imageUrl: string | null;
   stockStore: number;
   stockWarehouse: number;
@@ -36,6 +38,8 @@ export interface Product {
   costPrice: number;
   salePrice: number;
   description: string | null;
+  mainImageKey: string | null;
+  // URL pública derivada de mainImageKey: es la que se muestra
   mainImageUrl: string | null;
   status: ProductStatus;
   available: boolean;
@@ -94,3 +98,40 @@ export const PRODUCT_STATUS_OPTIONS: ProductStatusOption[] = [
     badgeClass: 'bg-info-subtle text-info border border-info-subtle'
   }
 ];
+
+// --- PETICIONES ---
+
+export interface AttributeLineRequest {
+  attributeId: number;
+  valueIds: number[];
+  // Posición del atributo en el SKU de este producto
+  sequence?: number;
+}
+
+export interface CreateProductRequest {
+  name: string;
+  skuPrefix: string;
+  costPrice: number;
+  salePrice: number;
+  description: string | null;
+  posCategoryIds: number[];
+  attributeLines: AttributeLineRequest[];
+  // uploadId de una subida en estado 'ready'
+  mainImageUploadId?: string;
+}
+
+export interface UpdateProductRequest extends Partial<Omit<CreateProductRequest, 'mainImageUploadId'>> {
+  // undefined = no se toca, null = quitar la imagen, uuid = nueva imagen
+  mainImageUploadId?: string | null;
+  available?: boolean;
+}
+
+export interface UpdateVariantRequest {
+  barcode?: string;
+  imageUploadId?: string | null;
+}
+
+export interface UpdateVariantStockRequest {
+  stockStore: number;
+  stockWarehouse: number;
+}

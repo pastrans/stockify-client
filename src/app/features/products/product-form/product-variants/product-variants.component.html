@@ -1,0 +1,126 @@
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+  <div>
+    <h6 class="mb-0 fw-semibold">Variantes y existencias</h6>
+    <span class="small text-secondary">
+      Totales — Tienda: <strong class="text-info font-monospace">{{ totalStore() }}</strong>
+      · Bodega: <strong class="text-warning font-monospace">{{ totalWarehouse() }}</strong>
+    </span>
+  </div>
+  <!-- En pantallas pequeñas las acciones van al final de la tabla -->
+  <div class="d-none d-md-flex gap-2">
+    <ng-container *ngTemplateOutlet="actions"></ng-container>
+  </div>
+</div>
+
+@if (errorMessage()) {
+  <div class="alert alert-danger alert-dismissible fade show small" role="alert">
+    <i class="bi bi-exclamation-octagon me-1"></i> {{ errorMessage() }}
+    <button type="button" class="btn-close" (click)="errorMessage.set(null)" aria-label="Close"></button>
+  </div>
+}
+
+<div class="table-responsive">
+  <table class="table table-dark table-hover align-middle mb-0">
+    <thead>
+      <tr>
+        <th scope="col" style="width: 64px;">Foto</th>
+        <th scope="col">SKU</th>
+        <th scope="col">Combinación</th>
+        <th scope="col" style="width: 190px;">Código de barras</th>
+        <th scope="col" class="text-center" style="width: 120px;">Tienda</th>
+        <th scope="col" class="text-center" style="width: 120px;">Bodega</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (variant of variants(); track variant.id + ':' + renderVersion(); let i = $index) {
+        <tr [formGroup]="rows.at(i)" [class.row-changed]="isRowChanged(i)">
+          <td>
+            <app-image-upload
+              size="sm"
+              label="Foto de la variante"
+              [imageUrl]="variant.imageUrl"
+              [disabled]="isSaving()"
+              (changed)="onImageChange(variant, $event)"
+            ></app-image-upload>
+          </td>
+          <td>
+            <span class="badge bg-black border border-info text-info font-monospace">{{ variant.sku }}</span>
+            @if (variant.isLocked) {
+              <i class="bi bi-lock-fill text-warning ms-1 small" title="Tiene existencias"></i>
+            }
+          </td>
+          <td class="small">{{ combinationLabel(variant) }}</td>
+          <td>
+            <input
+              type="text"
+              class="form-control form-control-sm font-monospace"
+              formControlName="barcode"
+              [title]="isSynced ? 'Congelado: el producto está sincronizado con Odoo' : ''"
+              [class.is-invalid]="isInvalid(rows.at(i), 'barcode')"
+            >
+          </td>
+          <td>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              class="form-control form-control-sm text-center font-monospace text-info fw-bold"
+              formControlName="stockStore"
+              aria-label="Existencias en tienda"
+              [class.is-invalid]="isInvalid(rows.at(i), 'stockStore')"
+            >
+          </td>
+          <td>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              class="form-control form-control-sm text-center font-monospace text-warning fw-bold"
+              formControlName="stockWarehouse"
+              aria-label="Existencias en bodega"
+              [class.is-invalid]="isInvalid(rows.at(i), 'stockWarehouse')"
+            >
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="6" class="text-center text-secondary py-5">
+            <i class="bi bi-grid-3x3 display-6 d-block mb-2"></i>
+            Este producto no tiene variantes activas.
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (rows.invalid && rows.touched) {
+  <div class="text-danger small mt-2">Las existencias deben ser enteros mayores o iguales a 0 y el código de barras es obligatorio.</div>
+}
+
+<div class="d-flex flex-column flex-sm-row justify-content-end gap-2 mt-4 pt-3 border-top border-secondary">
+  <ng-container *ngTemplateOutlet="actions"></ng-container>
+</div>
+
+<ng-template #actions>
+  <button
+    type="button"
+    class="btn btn-outline-secondary"
+    [disabled]="!hasChanges() || isSaving()"
+    (click)="discard()"
+  >
+    Descartar
+  </button>
+  <button
+    type="button"
+    class="btn btn-success px-4 d-flex align-items-center justify-content-center gap-2"
+    [disabled]="!canSave()"
+    [title]="hasBlockingImage() ? 'Espera a que terminen de procesarse las imágenes o quita las que fallaron' : ''"
+    (click)="save()"
+  >
+    @if (isSaving()) {
+      <span class="spinner-border spinner-border-sm" role="status"></span>
+    }
+    Guardar Existencias
+  </button>
+</ng-template>

@@ -1,0 +1,148 @@
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
+  <div>
+    <h6 class="mb-0 fw-semibold">Atributos y valores</h6>
+    <span class="form-text small">
+      El orden de las filas es el orden de los atributos en el SKU. Las variantes se generan al guardar el producto.
+    </span>
+  </div>
+  <button
+    type="button"
+    class="btn btn-sm btn-outline-info d-flex align-items-center gap-1 flex-shrink-0"
+    [disabled]="!canAddLine()"
+    (click)="addLine()"
+  >
+    <i class="bi bi-plus-lg"></i> Agregar atributo
+  </button>
+</div>
+
+@if (isLocked) {
+  <div class="alert alert-warning small py-2 d-flex gap-2" role="alert">
+    <i class="bi bi-lock-fill"></i>
+    <span>
+      El producto está bloqueado: no se pueden agregar ni quitar atributos, pero sí agregar valores nuevos.
+      Los valores con existencias no se pueden quitar.
+      @if (isSynced) {
+        Al estar sincronizado con Odoo, tampoco se puede cambiar el orden de los atributos.
+      }
+    </span>
+  </div>
+}
+
+<div class="table-responsive">
+  <table class="table table-dark align-middle mb-0">
+    <thead>
+      <tr>
+        <th scope="col" style="width: 70px;">Orden</th>
+        <th scope="col" style="min-width: 200px; width: 260px;">Atributo</th>
+        <th scope="col" style="min-width: 240px;">Valores</th>
+        <th scope="col" class="text-end" style="width: 60px;"><span class="visually-hidden">Acciones</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (group of lines.controls; track group; let i = $index; let first = $first; let last = $last) {
+        <tr>
+          <!-- Orden en el SKU -->
+          <td>
+            <div class="btn-group-vertical btn-group-sm">
+              <button
+                type="button"
+                class="btn btn-outline-secondary py-0"
+                title="Subir"
+                aria-label="Subir"
+                [disabled]="first || isSynced"
+                (click)="moveLine(i, -1)"
+              >
+                <i class="bi bi-chevron-up"></i>
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-secondary py-0"
+                title="Bajar"
+                aria-label="Bajar"
+                [disabled]="last || isSynced"
+                (click)="moveLine(i, 1)"
+              >
+                <i class="bi bi-chevron-down"></i>
+              </button>
+            </div>
+          </td>
+
+          <!-- Atributo -->
+          <td class="align-top pt-3">
+            @if (canChangeLine(group)) {
+              <app-search-select
+                [formControl]="group.controls.attributeId"
+                [options]="attributeOptions(group)"
+                placeholder="Seleccionar atributo"
+                searchPlaceholder="Buscar atributo..."
+                emptyText="No hay atributos disponibles"
+                [invalid]="group.controls.attributeId.value === null && lines.dirty"
+                [loading]="refreshing"
+                (opened)="refresh.emit()"
+                (selectionChange)="onAttributeSelected(i, $event)"
+              ></app-search-select>
+            } @else {
+              <span class="fw-semibold">{{ attributeName(group.controls.attributeId.value) }}</span>
+              <i class="bi bi-lock-fill text-warning ms-1 small" title="Atributo fijo: el producto está bloqueado"></i>
+            }
+          </td>
+
+          <!-- Valores -->
+          <td class="align-top pt-3">
+            @if (group.controls.attributeId.value !== null) {
+              <app-multi-search-select
+                [formControl]="group.controls.valueIds"
+                [options]="valueOptions(group)"
+                placeholder="Agregar valores"
+                searchPlaceholder="Buscar valor..."
+                emptyText="Este atributo no tiene valores"
+                [invalid]="group.controls.valueIds.value.length === 0 && lines.dirty"
+                [loading]="refreshing"
+                (opened)="refresh.emit()"
+              ></app-multi-search-select>
+            } @else {
+              <span class="text-secondary small">Selecciona un atributo primero.</span>
+            }
+          </td>
+
+          <!-- Quitar línea -->
+          <td class="text-end">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-danger"
+              title="Quitar atributo"
+              aria-label="Quitar atributo"
+              [disabled]="!canChangeLine(group)"
+              (click)="removeLine(i)"
+            >
+              <i class="bi bi-trash-fill"></i>
+            </button>
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="4" class="text-center text-secondary py-4 small">
+            <i class="bi bi-palette d-block fs-4 mb-1"></i>
+            Sin atributos: el producto tendrá una sola variante.
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (hasIncompleteLines() && lines.dirty) {
+  <div class="text-danger small mt-2">Cada atributo necesita al menos un valor.</div>
+}
+
+<!-- Vista previa de la matriz -->
+@if (variantCount() > 0) {
+  <div class="d-flex flex-wrap align-items-center gap-2 small text-secondary mt-3">
+    <i class="bi bi-grid-3x3"></i>
+    <span>
+      Se generarán <strong class="text-light">{{ variantCount() }}</strong>
+      {{ variantCount() === 1 ? 'variante' : 'variantes' }}. Formato de SKU:
+    </span>
+    <span class="badge bg-black border border-info text-info font-monospace">{{ sampleSku() }}</span>
+  </div>
+}

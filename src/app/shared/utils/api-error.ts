@@ -14,6 +14,69 @@ const FRIENDLY_MESSAGES: { pattern: RegExp; translate: (match: RegExpMatchArray)
   {
     pattern: /Cannot delete product: variants have active physical stock/i,
     translate: () => 'No se puede eliminar el producto porque está bloqueado: tiene existencias o ya fue sincronizado con Odoo.'
+  },
+  // --- Productos ---
+  {
+    pattern: /A product with skuPrefix '(.+)' already exists/i,
+    translate: (match) => `Ya existe un producto con el prefijo SKU "${match[1]}".`
+  },
+  {
+    pattern: /^SKU conflict: (.+)\. Change the skuPrefix\.$/i,
+    translate: (match) => {
+      const conflicts = match[1]
+        .replace(/is already used by product '([^']+)' \(id (\d+)\)/g, 'ya lo usa el producto "$1" (#$2)')
+        .replace(/\(inactive variant\)/g, '(variante inactiva)');
+      return `Hay SKU o códigos de barras repetidos: ${conflicts}. Cambia el prefijo SKU.`;
+    }
+  },
+  {
+    pattern: /SKU, barcode, or skuPrefix conflict occurred/i,
+    translate: () => 'El SKU, el código de barras o el prefijo SKU ya están en uso por otro producto.'
+  },
+  {
+    pattern: /Cannot change skuPrefix: product has physical stock or is locked/i,
+    translate: () => 'No se puede cambiar el prefijo SKU: el producto tiene existencias o está sincronizado.'
+  },
+  {
+    pattern: /Cannot add or remove attribute lines/i,
+    translate: () => 'El producto está bloqueado: no se pueden agregar ni quitar atributos, solo agregar valores nuevos.'
+  },
+  {
+    pattern: /Cannot change the attribute order of a synced product/i,
+    translate: () => 'No se puede cambiar el orden de los atributos de un producto sincronizado con Odoo. Desincronízalo primero.'
+  },
+  {
+    pattern: /Cannot remove value: variant '(.+)' has (\d+) physical units in stock/i,
+    translate: (match) => `No se puede quitar el valor: la variante "${match[1]}" tiene ${match[2]} unidades en existencia.`
+  },
+  {
+    pattern: /Barcode already assigned to another variant/i,
+    translate: () => 'Ese código de barras ya está asignado a otra variante.'
+  },
+  {
+    pattern: /Cannot update stock: variant is inactive/i,
+    translate: () => 'No se pueden actualizar las existencias de una variante inactiva.'
+  },
+  // --- Subida de imágenes ---
+  {
+    pattern: /Upload '.+' is still processing/i,
+    translate: () => 'La imagen todavía se está procesando. Espera a que termine antes de guardar.'
+  },
+  {
+    pattern: /Upload '.+' failed processing: (.+)/i,
+    translate: (match) => `El procesamiento de la imagen falló: ${match[1]}`
+  },
+  {
+    pattern: /Upload '.+' not found or expired/i,
+    translate: () => 'La imagen subida expiró o no existe. Vuelve a subirla.'
+  },
+  {
+    pattern: /Invalid file format\. Only JPEG, PNG, and WebP are allowed/i,
+    translate: () => 'Formato no permitido. Usa JPG, PNG o WebP.'
+  },
+  {
+    pattern: /File size exceeds the maximum limit of 5MB/i,
+    translate: () => 'La imagen supera el máximo de 5 MB.'
   }
 ];
 
