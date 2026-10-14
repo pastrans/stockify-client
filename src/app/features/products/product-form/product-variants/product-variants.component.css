@@ -2,3 +2,16 @@
 .row-changed > td:first-child {
   box-shadow: inset 3px 0 0 var(--bs-warning);
 }
+
+.color-card {
+  min-width: 170px;
+}
+
+.color-dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}

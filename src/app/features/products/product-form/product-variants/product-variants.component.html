@@ -19,6 +19,40 @@
   </div>
 }
 
+<!-- Fotos por color: la foto de cada color se aplica a sus variantes -->
+@if (colorGroups().length > 0) {
+  <div class="bg-body-tertiary p-3 rounded border border-secondary-subtle mb-3">
+    <h6 class="mb-0 fw-semibold">Fotos por color</h6>
+    <span class="form-text small">
+      La foto de cada color se aplica a sus variantes sin foto. Se guarda con "Guardar Existencias"
+      y cada variante se puede cambiar después en la tabla.
+    </span>
+    <div class="d-flex flex-wrap gap-2 mt-3">
+      @for (group of colorGroups(); track group.value.id + ':' + renderVersion()) {
+        <div class="color-card d-flex align-items-center gap-2 border border-secondary rounded px-2 py-2">
+          <app-image-upload
+            size="sm"
+            [label]="'Foto de ' + group.value.valueName"
+            [disabled]="isSaving()"
+            (changed)="onColorImageChange(group, $event)"
+          ></app-image-upload>
+          <div class="small lh-sm">
+            <div class="d-flex align-items-center gap-1 fw-semibold">
+              @if (group.value.colorHex) {
+                <span class="color-dot" [style.background-color]="group.value.colorHex"></span>
+              }
+              {{ group.value.valueName }}
+            </div>
+            <span class="text-secondary">
+              {{ group.variants.length }} {{ group.variants.length === 1 ? 'variante' : 'variantes' }}
+            </span>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}
+
 <div class="table-responsive">
   <table class="table table-dark table-hover align-middle mb-0">
     <thead>
@@ -39,6 +73,7 @@
               size="sm"
               label="Foto de la variante"
               [imageUrl]="variant.imageUrl"
+              [applied]="appliedImages().get(variant.id)"
               [disabled]="isSaving()"
               (changed)="onImageChange(variant, $event)"
             ></app-image-upload>

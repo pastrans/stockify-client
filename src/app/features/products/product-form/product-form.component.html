@@ -266,7 +266,7 @@
                 <span>Hay cambios del producto sin guardar. Las variantes se actualizan al pulsar "Guardar Producto".</span>
               </div>
             }
-            <app-product-variants [product]="current" (saved)="onVariantsSaved()"></app-product-variants>
+            <app-product-variants [product]="current" [attributes]="attributes()" (saved)="onVariantsSaved()"></app-product-variants>
           </div>
         }
 

@@ -2,7 +2,7 @@ import { Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChil
 import { NgbDropdownModule, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Subscription } from 'rxjs';
 import { UploadService } from '../../../core/services/upload.service';
-import { ImageChange } from '../../models/upload.model';
+import { AppliedImage, ImageChange } from '../../models/upload.model';
 import { getApiErrorMessage } from '../../utils/api-error';
 import { ImgFallbackDirective } from '../../directives/img-fallback.directive';
 import { CameraCaptureComponent, CameraCaptureResult } from '../camera-capture/camera-capture.component';
@@ -43,6 +43,26 @@ export class ImageUploadComponent implements OnDestroy {
     this.reset();
   }
 
+  /**
+   * Foto ya procesada que aplica el padre (p. ej. la foto de un color a sus variantes): se muestra
+   * como "lista para guardar" sin emitir `changed`, porque el padre ya registró el cambio.
+   * Al volver a null, se descarta solo si la foto mostrada sigue siendo la aplicada.
+   * Enlazar después de [imageUrl], que reinicia el estado.
+   */
+  @Input() set applied(image: AppliedImage | null | undefined) {
+    if (image) {
+      this.cancelUpload();
+      this.clearPreviews();
+      this.errorMessage.set(null);
+      this.readyPreview.set(image.previewUrl);
+      this.currentUploadId = image.uploadId;
+      this.state.set('ready');
+    } else if (this.appliedUploadId && this.currentUploadId === this.appliedUploadId) {
+      this.reset();
+    }
+    this.appliedUploadId = image?.uploadId ?? null;
+  }
+
   @Output() changed = new EventEmitter<ImageChange>();
 
   @ViewChild('fileInput') private fileInput?: ElementRef<HTMLInputElement>;
@@ -58,6 +78,9 @@ export class ImageUploadComponent implements OnDestroy {
   errorMessage = signal<string | null>(null);
 
   private subscription: Subscription | null = null;
+  // uploadId de la foto en estado 'ready' y, si vino de fuera, el de la foto aplicada
+  private currentUploadId: string | null = null;
+  private appliedUploadId: string | null = null;
   private previewRef: NgbModalRef | null = null;
 
   private previewStatus = computed<ImagePreviewStatus | null>(() => {
@@ -151,7 +174,8 @@ export class ImageUploadComponent implements OnDestroy {
         if (res.status === 'ready') {
           this.readyPreview.set(res.previewUrl ?? null);
           this.state.set('ready');
-          this.changed.emit({ status: 'ready', uploadId });
+          this.currentUploadId = uploadId;
+          this.changed.emit({ status: 'ready', uploadId, previewUrl: res.previewUrl ?? null });
         } else if (res.status === 'failed') {
           this.fail(res.error || 'El procesamiento de la imagen falló.');
         }
@@ -224,6 +248,7 @@ export class ImageUploadComponent implements OnDestroy {
   private cancelUpload(): void {
     this.subscription?.unsubscribe();
     this.subscription = null;
+    this.currentUploadId = null;
   }
 
   private setLocalPreview(file: File): void {
