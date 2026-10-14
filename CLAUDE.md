@@ -71,5 +71,5 @@ Imágenes de producto y variante: se suben primero a `uploads` y el formulario e
 
 ## Estado del proyecto
 
-Hecho: base de la SPA, autenticación (login/reset), layout en dark mode, gestión de usuarios, categorías POS y atributos con sus valores.
-Pendiente (EP08): plantillas de producto con matriz de variantes, conteo físico de stock, subida de imágenes y sincronización/exportación con Odoo.
+Hecho: base de la SPA, autenticación (login/reset), layout en dark mode, gestión de usuarios, categorías POS, atributos con sus valores, plantillas de producto con matriz de variantes y existencias por variante, y subida de imágenes (archivo o cámara, con fotos por color).
+Pendiente (EP08): conteo físico de stock y exportación a Odoo. Los requerimientos de la exportación (ajustes, formato de archivos, endpoints propuestos y decisiones pendientes) están en `../Stockify-API/docs/odoo-export-requirements.md`, con los archivos de ejemplo de Odoo en `../Stockify-API/docs/odoo-samples/`.
