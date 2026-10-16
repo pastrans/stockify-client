@@ -2,6 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 import { PRODUCT_STATUS_OPTIONS, Product } from '../../../shared/models/product.model';
 import { Attribute } from '../../../shared/models/attribute.model';
@@ -22,6 +23,7 @@ import {
   toAttributeLineRequests
 } from './product-attribute-lines/product-attribute-lines.component';
 import { ProductVariantsComponent } from './product-variants/product-variants.component';
+import { ProductOdooActionsService } from '../product-odoo-actions.service';
 
 type FormTab = 'general' | 'attributes' | 'variants';
 
@@ -44,6 +46,7 @@ const toast = Swal.mixin({
     ReactiveFormsModule,
     NgTemplateOutlet,
     RouterLink,
+    NgbDropdownModule,
     ImageUploadComponent,
     MultiSearchSelectComponent,
     ProductAttributeLinesComponent,
@@ -59,11 +62,14 @@ export class ProductFormComponent implements OnInit {
   private readonly productService = inject(ProductService);
   private readonly attributeService = inject(AttributeService);
   private readonly posCategoryService = inject(PosCategoryService);
+  readonly odooActions = inject(ProductOdooActionsService);
 
   private readonly CATALOG_LIMIT = 100;
 
   // Estado de la vista
   product = signal<Product | null>(null);
+  // Acción de Odoo en curso (exportar, sincronizar o quitar sincronización)
+  isOdooBusy = signal<boolean>(false);
   isEditMode = signal<boolean>(false);
   isLoading = signal<boolean>(false);
   isSaving = signal<boolean>(false);
@@ -350,8 +356,45 @@ export class ProductFormComponent implements OnInit {
     });
   }
 
+  // --- ACCIONES DE ODOO (US-F5) ---
+
+  async runOdooAction(action: 'export' | 'sync' | 'unsync'): Promise<void> {
+    const product = this.product();
+    if (!product || this.isOdooBusy()) return;
+
+    // La exportación y la sincronización usan los datos guardados, no los del formulario
+    if (this.hasChanges()) {
+      const confirm = await Swal.fire({
+        theme: 'dark',
+        icon: 'warning',
+        title: 'Hay cambios sin guardar',
+        text: 'La acción usará los datos guardados del producto, sin los cambios del formulario. ¿Continuar?',
+        showCancelButton: true,
+        confirmButtonText: 'Continuar',
+        cancelButtonText: 'Cancelar'
+      });
+      if (!confirm.isConfirmed) return;
+    }
+
+    this.isOdooBusy.set(true);
+    try {
+      const changed = action === 'export'
+        ? await this.odooActions.exportProduct(product)
+        : action === 'sync'
+          ? await this.odooActions.syncProduct(product)
+          : await this.odooActions.unsyncProduct(product);
+      if (changed) this.reloadProduct();
+    } finally {
+      this.isOdooBusy.set(false);
+    }
+  }
+
   // Tras guardar existencias se recarga: el stock puede cambiar el estado y los bloqueos
   onVariantsSaved(): void {
+    this.reloadProduct();
+  }
+
+  private reloadProduct(): void {
     const product = this.product();
     if (!product) return;
 

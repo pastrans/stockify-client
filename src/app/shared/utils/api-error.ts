@@ -66,6 +66,12 @@ const FRIENDLY_MESSAGES: { pattern: RegExp; translate: (match: RegExpMatchArray)
     pattern: /Cannot update stock: variant is inactive/i,
     translate: () => 'No se pueden actualizar las existencias de una variante inactiva.'
   },
+  // --- Sincronización con Odoo ---
+  {
+    pattern: /The product went back to draft because it has no stock, but it already exists in Odoo/i,
+    translate: () => 'El producto volvió a borrador porque no tiene existencias, pero ya existe en Odoo. ' +
+      'Si cambias sus atributos o su prefijo SKU, sus variantes pueden regenerarse y duplicarse en Odoo en la siguiente importación.'
+  },
   // --- Configuración de exportación ---
   {
     pattern: /externalIdPrefix cannot be changed: (\d+) product\(s\) are already synced with Odoo using "(.+)"/i,
@@ -113,6 +119,11 @@ const FRIENDLY_MESSAGES: { pattern: RegExp; translate: (match: RegExpMatchArray)
     translate: () => 'La imagen supera el máximo de 5 MB.'
   }
 ];
+
+// Traduce un mensaje suelto de la API (p. ej. el campo `warning`); si no es conocido, lo devuelve igual
+export function translateApiMessage(raw: string): string {
+  return translateMessage(raw) ?? raw;
+}
 
 // Traduce un mensaje de la API si coincide con algún patrón conocido
 function translateMessage(raw: string): string | null {

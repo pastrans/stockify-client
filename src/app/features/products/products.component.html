@@ -337,12 +337,33 @@
       aria-label="Opciones"
       ngbDropdownToggle
     >
-      <i class="bi bi-gear-fill"></i>
+      @if (busyProductId() === product.id) {
+        <span class="spinner-border spinner-border-sm" role="status"></span>
+      } @else {
+        <i class="bi bi-gear-fill"></i>
+      }
     </button>
     <div ngbDropdownMenu class="dropdown-menu-dark">
       <button ngbDropdownItem (click)="goToEdit(product)">
         <i class="bi bi-pencil-fill me-2 text-warning"></i> Editar
       </button>
+      @if (product.available) {
+        <div class="dropdown-divider"></div>
+        <h6 class="dropdown-header">Odoo</h6>
+        <button ngbDropdownItem [disabled]="busyProductId() !== null" (click)="runOdooAction(product, 'export')">
+          <i class="bi bi-cloud-arrow-up me-2 text-info"></i> Exportar a Odoo
+        </button>
+        @if (odooActions.canSync(product)) {
+          <button ngbDropdownItem [disabled]="busyProductId() !== null" (click)="runOdooAction(product, 'sync')">
+            <i class="bi bi-cloud-check me-2 text-info"></i> Marcar como sincronizado
+          </button>
+        }
+        @if (odooActions.canUnsync(product)) {
+          <button ngbDropdownItem [disabled]="busyProductId() !== null" (click)="runOdooAction(product, 'unsync')">
+            <i class="bi bi-cloud-slash me-2 text-secondary"></i> Quitar sincronización
+          </button>
+        }
+      }
       @if (product.available) {
         <div class="dropdown-divider"></div>
         <button

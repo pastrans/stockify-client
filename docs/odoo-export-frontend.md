@@ -162,11 +162,11 @@ Odoo usa esos caracteres como separadores al importar las variantes. Conviene va
 
 **Como** administrador, **quiero** exportar un solo producto y controlar su estado de sincronización, **para** subir productos nuevos o variantes nuevas sin una exportación total.
 
-- [ ] En la pantalla del producto (o en sus acciones del listado): **"Exportar a Odoo"** (`POST /exports/products/:id`), con la misma descarga y manejo de errores que US-F3.
-- [ ] **"Marcar como sincronizado"** (`PATCH /products/sync` con su id), con confirmación.
-- [ ] **"Quitar sincronización"** (`PATCH /products/:id/unsync`), solo si está `synced`, con confirmación. Si la respuesta trae `warning`, mostrarlo traducido como alerta de advertencia (no de éxito).
-- [ ] En la matriz de variantes, indicar cuáles ya están en Odoo (`syncedAt`) y cuáles están pendientes (sus existencias se exportarán).
-- [ ] Al seleccionar varios productos en el listado (opcional), permitir "Marcar como sincronizados" en lote con `PATCH /products/sync`.
+- [x] En la pantalla del producto (o en sus acciones del listado): **"Exportar a Odoo"** (`POST /exports/products/:id`), con la misma descarga y manejo de errores que US-F3.
+- [x] **"Marcar como sincronizado"** (`PATCH /products/sync` con su id), con confirmación.
+- [x] **"Quitar sincronización"** (`PATCH /products/:id/unsync`), solo si está `synced`, con confirmación. Si la respuesta trae `warning`, mostrarlo traducido como alerta de advertencia (no de éxito).
+- [x] En la matriz de variantes, indicar cuáles ya están en Odoo (`syncedAt`) y cuáles están pendientes (sus existencias se exportarán).
+- ~~Al seleccionar varios productos en el listado (opcional), permitir "Marcar como sincronizados" en lote con `PATCH /products/sync`.~~ *Fuera de esta versión (decidido el 2026-10-16): el aviso de US-F4 cubre el caso masivo.*
 
 **Hecho cuando:** un producto se exporta, se marca y se desmarca desde la UI, y la advertencia del `unsync` se ve.
 

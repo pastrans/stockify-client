@@ -16,6 +16,7 @@ import { ODOO_COLORS, PosCategory } from '../../shared/models/pos-category.model
 import { ProductService } from '../../core/services/product.service';
 import { PosCategoryService } from '../../core/services/pos-category.service';
 import { ExportService } from '../../core/services/export.service';
+import { ProductOdooActionsService } from './product-odoo-actions.service';
 import { getApiErrorMessage } from '../../shared/utils/api-error';
 import { showApiErrorAlert } from '../../shared/utils/error-alert';
 import { downloadBlob } from '../../shared/utils/download-file';
@@ -56,6 +57,7 @@ export class ProductsComponent implements OnInit {
   private readonly productService = inject(ProductService);
   private readonly posCategoryService = inject(PosCategoryService);
   private readonly exportService = inject(ExportService);
+  readonly odooActions = inject(ProductOdooActionsService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
 
@@ -69,6 +71,8 @@ export class ProductsComponent implements OnInit {
   // Generar el .zip puede tardar con muchos productos
   isExporting = signal<boolean>(false);
   isSyncingExport = signal<boolean>(false);
+  // Producto con una acción de Odoo en curso (exportar, sincronizar o quitar sincronización)
+  busyProductId = signal<number | null>(null);
   // Exportación total pendiente de marcar como sincronizada (US-F4)
   readonly lastExport = this.exportService.lastExport;
   viewMode = signal<ViewMode>(this.readStoredView());
@@ -371,6 +375,22 @@ export class ProductsComponent implements OnInit {
       confirmButtonText: 'Entendido',
       width: '40rem'
     });
+  }
+
+  // Acciones de Odoo de un producto desde el menú de opciones (US-F5)
+  async runOdooAction(product: Product, action: 'export' | 'sync' | 'unsync'): Promise<void> {
+    if (this.busyProductId() !== null) return;
+    this.busyProductId.set(product.id);
+    try {
+      const changed = action === 'export'
+        ? await this.odooActions.exportProduct(product)
+        : action === 'sync'
+          ? await this.odooActions.syncProduct(product)
+          : await this.odooActions.unsyncProduct(product);
+      if (changed) this.loadProducts();
+    } finally {
+      this.busyProductId.set(null);
+    }
   }
 
   goToEdit(product: Product): void {

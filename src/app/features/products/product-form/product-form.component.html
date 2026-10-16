@@ -47,9 +47,47 @@
           }
         }
       </div>
-      <!-- En pantallas pequeñas las acciones van al final del formulario -->
-      <div class="d-none d-md-flex gap-2">
-        <ng-container *ngTemplateOutlet="formActions"></ng-container>
+      <div class="d-flex flex-wrap gap-2">
+        <!-- Acciones de Odoo: solo para productos guardados y activos -->
+        @if (product(); as current) {
+          @if (current.available) {
+            <div ngbDropdown placement="bottom-end" class="d-inline-block">
+              <button
+                type="button"
+                class="btn btn-outline-info d-flex align-items-center gap-2"
+                [disabled]="isOdooBusy()"
+                ngbDropdownToggle
+              >
+                @if (isOdooBusy()) {
+                  <span class="spinner-border spinner-border-sm" role="status"></span>
+                } @else {
+                  <i class="bi bi-cloud-arrow-up"></i>
+                }
+                Odoo
+              </button>
+              <div ngbDropdownMenu class="dropdown-menu-dark">
+                <button ngbDropdownItem (click)="runOdooAction('export')">
+                  <i class="bi bi-cloud-arrow-up me-2 text-info"></i> Exportar a Odoo
+                </button>
+                @if (odooActions.canSync(current)) {
+                  <button ngbDropdownItem (click)="runOdooAction('sync')">
+                    <i class="bi bi-cloud-check me-2 text-info"></i> Marcar como sincronizado
+                  </button>
+                }
+                @if (odooActions.canUnsync(current)) {
+                  <div class="dropdown-divider"></div>
+                  <button ngbDropdownItem (click)="runOdooAction('unsync')">
+                    <i class="bi bi-cloud-slash me-2 text-secondary"></i> Quitar sincronización
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        }
+        <!-- En pantallas pequeñas las acciones del formulario van al final -->
+        <div class="d-none d-md-flex gap-2">
+          <ng-container *ngTemplateOutlet="formActions"></ng-container>
+        </div>
       </div>
     </div>
 

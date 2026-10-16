@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output, computed, inject, signal } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable, concat, last } from 'rxjs';
 import Swal from 'sweetalert2';
@@ -41,7 +41,7 @@ const toast = Swal.mixin({
 @Component({
   selector: 'app-product-variants',
   standalone: true,
-  imports: [ReactiveFormsModule, NgTemplateOutlet, ImageUploadComponent],
+  imports: [ReactiveFormsModule, NgTemplateOutlet, DatePipe, ImageUploadComponent],
   templateUrl: './product-variants.component.html',
   styleUrls: ['./product-variants.component.css']
 })
@@ -104,6 +104,11 @@ export class ProductVariantsComponent {
 
     return groups.some(group => group.variants.length >= 2) ? groups : [];
   });
+
+  // Si alguna variante ya está en Odoo, se señalan también las pendientes (sus existencias se exportarán)
+  get hasVariantsInOdoo(): boolean {
+    return !!this.current?.variants.some(v => v.syncedAt !== null);
+  }
 
   // Un producto sincronizado tiene SKUs y códigos de barras congelados
   get isSynced(): boolean {

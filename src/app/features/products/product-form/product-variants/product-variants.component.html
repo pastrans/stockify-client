@@ -83,6 +83,25 @@
             @if (variant.isLocked) {
               <i class="bi bi-lock-fill text-warning ms-1 small" title="Tiene existencias"></i>
             }
+            @if (variant.syncedAt) {
+              <div class="mt-1">
+                <span
+                  class="badge bg-info-subtle text-info border border-info-subtle"
+                  [title]="'En Odoo desde el ' + (variant.syncedAt | date: 'dd/MM/yyyy HH:mm') + '. Sus existencias ya no se exportan: se ajustan en Odoo.'"
+                >
+                  <i class="bi bi-cloud-check me-1"></i>En Odoo
+                </span>
+              </div>
+            } @else if (hasVariantsInOdoo) {
+              <div class="mt-1">
+                <span
+                  class="badge bg-warning-subtle text-warning border border-warning-subtle"
+                  title="Aún no está en Odoo: se exportará con sus existencias"
+                >
+                  <i class="bi bi-hourglass-split me-1"></i>Pendiente de Odoo
+                </span>
+              </div>
+            }
           </td>
           <td class="small">{{ combinationLabel(variant) }}</td>
           <td>
