@@ -15,7 +15,10 @@ import {
 import { ODOO_COLORS, PosCategory } from '../../shared/models/pos-category.model';
 import { ProductService } from '../../core/services/product.service';
 import { PosCategoryService } from '../../core/services/pos-category.service';
+import { ExportService } from '../../core/services/export.service';
 import { getApiErrorMessage } from '../../shared/utils/api-error';
+import { showApiErrorAlert } from '../../shared/utils/error-alert';
+import { downloadBlob } from '../../shared/utils/download-file';
 import { ImgFallbackDirective } from '../../shared/directives/img-fallback.directive';
 import { AvailabilityFilter, toAvailableParam } from '../../shared/models/list-filter.model';
 import { ListFiltersComponent } from '../../shared/components/list-filters/list-filters.component';
@@ -51,6 +54,7 @@ const VIEW_STORAGE_KEY = 'stockify.products.view';
 export class ProductsComponent implements OnInit {
   private readonly productService = inject(ProductService);
   private readonly posCategoryService = inject(PosCategoryService);
+  private readonly exportService = inject(ExportService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
 
@@ -61,6 +65,8 @@ export class ProductsComponent implements OnInit {
   products = signal<Product[]>([]);
   isLoading = signal<boolean>(false);
   errorMessage = signal<string | null>(null);
+  // Generar el .zip puede tardar con muchos productos
+  isExporting = signal<boolean>(false);
   viewMode = signal<ViewMode>(this.readStoredView());
 
   // Paginación (12 encaja en las columnas del kanban: 2, 3 o 4 por fila)
@@ -204,6 +210,60 @@ export class ProductsComponent implements OnInit {
   }
 
   // --- ACCIONES ---
+
+  // Exportación total: productos activos no sincronizados (US-F3)
+  exportToOdoo(): void {
+    if (this.isExporting()) return;
+    this.isExporting.set(true);
+
+    this.exportService.exportFull().subscribe({
+      next: (result) => {
+        this.isExporting.set(false);
+        downloadBlob(result.blob, result.fileName);
+        this.exportService.saveLastExport(result);
+        this.showExportNextSteps(result.fileName);
+      },
+      error: (err) => {
+        this.isExporting.set(false);
+        showApiErrorAlert(err, 'No se pudo exportar', 'Error al generar la exportación a Odoo.');
+      }
+    });
+  }
+
+  private showExportNextSteps(fileName: string): void {
+    const container = document.createElement('div');
+    container.className = 'text-start small';
+
+    const downloaded = document.createElement('p');
+    downloaded.append('Se descargó ');
+    const name = document.createElement('code');
+    name.textContent = fileName;
+    downloaded.append(name, '.');
+    container.appendChild(downloaded);
+
+    const steps = document.createElement('ol');
+    steps.className = 'mb-0 ps-3';
+    [
+      'Importa los archivos en Odoo en orden (1 → 4). Si un archivo viene en partes (-01, -02…), importa todas antes de pasar al siguiente.',
+      'Después de importar las Existencias, pulsa "Aplicar todo" en Inventario físico.',
+      'Si todo se importó sin errores, vuelve aquí y marca la exportación como sincronizada.'
+    ].forEach(text => {
+      const item = document.createElement('li');
+      item.className = 'mb-1';
+      item.textContent = text;
+      steps.appendChild(item);
+    });
+    container.appendChild(steps);
+
+    Swal.fire({
+      theme: 'dark',
+      icon: 'success',
+      title: 'Exportación generada',
+      html: container,
+      confirmButtonText: 'Entendido',
+      width: '40rem'
+    });
+  }
 
   goToEdit(product: Product): void {
     this.router.navigate(['/products', product.id, 'edit']);

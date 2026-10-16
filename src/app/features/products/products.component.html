@@ -5,7 +5,7 @@
       <h2 class="fw-bold mb-1">Productos</h2>
       <p class="text-secondary small mb-0">Plantillas de producto con su matriz de variantes y existencias</p>
     </div>
-    <div class="d-flex align-items-center gap-2">
+    <div class="d-flex flex-wrap align-items-center gap-2">
       <!-- Selector de vista -->
       <div class="btn-group" role="group" aria-label="Tipo de vista">
         <button
@@ -31,6 +31,19 @@
           <i class="bi bi-grid-3x3-gap-fill"></i>
         </button>
       </div>
+      <button
+        type="button"
+        class="btn btn-outline-info d-flex align-items-center gap-2"
+        title="Descarga un .zip con los productos activos que aún no están sincronizados"
+        [disabled]="isExporting()"
+        (click)="exportToOdoo()"
+      >
+        @if (isExporting()) {
+          <span class="spinner-border spinner-border-sm" role="status"></span> Exportando...
+        } @else {
+          <i class="bi bi-cloud-arrow-up"></i> Exportar a Odoo
+        }
+      </button>
       <a routerLink="/products/new" class="btn btn-primary d-flex align-items-center gap-2">
         <i class="bi bi-plus-circle-fill"></i> Nuevo Producto
       </a>

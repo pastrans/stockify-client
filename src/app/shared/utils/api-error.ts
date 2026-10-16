@@ -114,14 +114,42 @@ const FRIENDLY_MESSAGES: { pattern: RegExp; translate: (match: RegExpMatchArray)
   }
 ];
 
-// Extrae el mensaje de error de la API (`{ error }` o `{ message }`) y lo traduce si es conocido
-export function getApiErrorMessage(err: HttpErrorResponse, fallback: string): string {
-  const raw: unknown = err.error?.error ?? err.error?.message;
-  if (typeof raw !== 'string' || !raw) return fallback;
-
+// Traduce un mensaje de la API si coincide con algún patrón conocido
+function translateMessage(raw: string): string | null {
   for (const { pattern, translate } of FRIENDLY_MESSAGES) {
     const match = raw.match(pattern);
     if (match) return translate(match);
   }
-  return raw;
+  return null;
+}
+
+function getRawMessage(err: HttpErrorResponse): string | null {
+  const raw: unknown = err.error?.error ?? err.error?.message;
+  return typeof raw === 'string' && raw ? raw : null;
+}
+
+// Extrae el mensaje de error de la API (`{ error }` o `{ message }`) y lo traduce si es conocido
+export function getApiErrorMessage(err: HttpErrorResponse, fallback: string): string {
+  const raw = getRawMessage(err);
+  if (!raw) return fallback;
+  return translateMessage(raw) ?? raw;
+}
+
+/**
+ * Como getApiErrorMessage, pero separa los problemas que la API junta con "; " (validaciones
+ * de la exportación) y traduce cada uno. Si el mensaje completo ya es conocido (p. ej. el de
+ * colisión de SKU, que también usa "; "), se devuelve como un único elemento.
+ */
+export function getApiErrorList(err: HttpErrorResponse, fallback: string): string[] {
+  const raw = getRawMessage(err);
+  if (!raw) return [fallback];
+
+  const whole = translateMessage(raw);
+  if (whole) return [whole];
+
+  return raw
+    .split('; ')
+    .map(part => part.trim())
+    .filter(part => part.length > 0)
+    .map(part => translateMessage(part) ?? part);
 }

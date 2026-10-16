@@ -138,11 +138,11 @@ Odoo usa esos caracteres como separadores al importar las variantes. Conviene va
 
 **Como** administrador, **quiero** descargar en un `.zip` todos los productos pendientes de Odoo, **para** hacer la carga inicial.
 
-- [ ] Botón **"Exportar a Odoo"** en el listado de productos.
-- [ ] Llama a `POST /exports/full`, descarga el `.zip` con su nombre y muestra un aviso con los pasos siguientes (importar en orden y luego marcar como sincronizados), con enlace a la guía (US-F6).
-- [ ] Guarda `generatedAt` de la última exportación (Signal en un servicio y `localStorage`, envuelto en `try/catch`) para US-F4.
-- [ ] Estado de carga mientras se genera (puede tardar con muchos productos).
-- [ ] Errores 400 mostrados como lista (los problemas vienen separados por `; `), p. ej. nombres de producto repetidos o valores con coma.
+- [x] Botón **"Exportar a Odoo"** en el listado de productos.
+- [x] Llama a `POST /exports/full`, descarga el `.zip` con su nombre y muestra un aviso con los pasos siguientes (importar en orden y luego marcar como sincronizados), con enlace a la guía (US-F6). *El enlace se agrega en US-F6.*
+- [x] Guarda `generatedAt` de la última exportación (Signal en un servicio y `localStorage`, envuelto en `try/catch`) para US-F4.
+- [x] Estado de carga mientras se genera (puede tardar con muchos productos).
+- [x] Errores 400 mostrados como lista (los problemas vienen separados por `; `), p. ej. nombres de producto repetidos o valores con coma.
 
 **Hecho cuando:** se descarga el `.zip` y los errores se ven claros.
 

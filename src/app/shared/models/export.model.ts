@@ -5,3 +5,9 @@ export interface ExportResult {
   // Valor de X-Export-Generated-At (ISO): se envía a PATCH /products/sync-exported
   generatedAt: string;
 }
+
+// Datos que se guardan de la última exportación total para marcarla después como sincronizada
+export interface LastExport {
+  generatedAt: string;
+  fileName: string;
+}
