@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -14,6 +15,7 @@ import {
 } from '../../../shared/models/attribute.model';
 import { AttributeService } from '../../../core/services/attribute.service';
 import { getApiErrorMessage } from '../../../shared/utils/api-error';
+import { AppValidators } from '../../../shared/utils/app-validators';
 import { SequenceInputComponent } from '../../../shared/components/sequence-input/sequence-input.component';
 
 type ValueField = 'valueName' | 'shortName';
@@ -32,7 +34,7 @@ const toast = Swal.mixin({
 @Component({
   selector: 'app-attribute-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, SequenceInputComponent],
+  imports: [ReactiveFormsModule, NgTemplateOutlet, RouterLink, SequenceInputComponent],
   templateUrl: './attribute-form.component.html',
   styleUrls: ['./attribute-form.component.css']
 })
@@ -59,7 +61,8 @@ export class AttributeFormComponent implements OnInit {
 
   // Metadatos del atributo
   attributeForm: FormGroup = this.fb.group({
-    name: ['', [Validators.required, Validators.minLength(3)]],
+    // Odoo usa ',' y ':' como separadores al importar las variantes ("Atributo:Valor, …")
+    name: ['', [Validators.required, Validators.minLength(3), AppValidators.noOdooSeparators([',', ':'])]],
     sequence: [0, [Validators.required, Validators.min(0)]],
     displayType: ['select' as DisplayType, Validators.required],
     variantCreation: ['dynamically' as VariantCreation, Validators.required],
@@ -132,8 +135,8 @@ export class AttributeFormComponent implements OnInit {
     return this.fb.group({
       id: [value?.id ?? null],
       hasStoredColor: [!!value?.colorHex],
-      valueName: [value?.valueName ?? '', Validators.required],
-      shortName: [value?.shortName ?? '', [Validators.required, Validators.maxLength(this.SHORT_NAME_MAX)]],
+      valueName: [value?.valueName ?? '', [Validators.required, AppValidators.noOdooSeparators()]],
+      shortName: [value?.shortName ?? '', [Validators.required, Validators.maxLength(this.SHORT_NAME_MAX), AppValidators.noOdooSeparators()]],
       colorHex: [value?.colorHex ?? DEFAULT_COLOR, Validators.required]
     });
   }
@@ -187,6 +190,13 @@ export class AttributeFormComponent implements OnInit {
 
   isDuplicate(index: number, field: ValueField): boolean {
     return this.duplicateIndexes(field).has(index);
+  }
+
+  // Algún valor (guardado, nuevo o de la fila de alta) con una coma en el nombre o en el código SKU
+  hasValueSeparatorError(): boolean {
+    return [...this.valuesArray.controls, this.newValueForm].some(group =>
+      ['valueName', 'shortName'].some(field => group.get(field)?.hasError('odooSeparators'))
+    );
   }
 
   hasDuplicates(): boolean {

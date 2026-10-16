@@ -211,7 +211,7 @@ Agregar a `FRIENDLY_MESSAGES` en `shared/utils/api-error.ts` (mensajes exactos d
 | `exportedAt is required…`, `exportedAt must be a valid ISO date`, `exportedAt cannot be in the future` | Errores de `sync-exported` |
 | `The product went back to draft because it has no stock, but it already exists in Odoo…` (campo `warning`, no error) | Advertencia del `unsync` |
 
-- [ ] Traducciones agregadas, incluida la separación de varios problemas (`; `) en una lista.
+- [x] Traducciones agregadas, incluida la separación de varios problemas (`; `) en una lista.
 
 **Hecho cuando:** ningún error de exportación o configuración se muestra en inglés.
 

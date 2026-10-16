@@ -9,6 +9,29 @@ const SETTINGS_FIELD_LABELS: Record<string, string> = {
   attributeCategory: 'Categoría de atributo'
 };
 
+// Hojas de la exportación a Odoo, con el nombre que se usa en la UI
+const EXPORT_SHEETS: Record<string, string> = {
+  'Product Attribute': 'Atributos',
+  'Point of Sale Category': 'Categorías POS',
+  'Products': 'Productos',
+  'Existencias': 'Existencias'
+};
+
+// Los problemas de la exportación empiezan con el nombre de su hoja ("Products: …")
+const EXPORT_PROBLEM_SEPARATOR = new RegExp(`; (?=(?:${Object.keys(EXPORT_SHEETS).join('|')}): )`);
+
+// Campo del mensaje "X cannot contain …" de la API, en español
+function separatorFieldLabel(match: RegExpMatchArray): string {
+  const [, , attribute, value, valueOf, valueName, shortName, plain] = match;
+  if (attribute !== undefined) return `El atributo "${attribute}"`;
+  if (value !== undefined) return `El valor "${value}" de "${valueOf}"`;
+  if (valueName !== undefined) return `El valor "${valueName}"`;
+  if (shortName !== undefined) return `El código SKU "${shortName}"`;
+  if (plain === 'valueName') return 'El nombre del valor';
+  if (plain === 'shortName') return 'El código SKU del valor';
+  return 'El nombre del atributo';
+}
+
 // Traducciones de los mensajes de negocio (400) que devuelve la API en inglés
 const FRIENDLY_MESSAGES: { pattern: RegExp; translate: (match: RegExpMatchArray) => string }[] = [
   {
@@ -66,7 +89,55 @@ const FRIENDLY_MESSAGES: { pattern: RegExp; translate: (match: RegExpMatchArray)
     pattern: /Cannot update stock: variant is inactive/i,
     translate: () => 'No se pueden actualizar las existencias de una variante inactiva.'
   },
+  // --- Exportación a Odoo ---
+  {
+    pattern: /There are no products to export: every active product is already synced/i,
+    translate: () => 'No hay productos que exportar: todos los productos activos ya están sincronizados con Odoo.'
+  },
+  {
+    pattern: /^Product with id \d+ not found$/i,
+    translate: () => 'El producto no existe o está inactivo.'
+  },
+  {
+    pattern: /^Products: the name "(.+)" is used by several products \((.+)\); Odoo matches variants to products by name/i,
+    translate: (match) => `Productos: el nombre "${match[1]}" lo usan varios productos (${match[2]}). ` +
+      'Odoo asigna las variantes a su producto por nombre: cambia el nombre de uno de ellos.'
+  },
+  {
+    pattern: /^Products: "(.+)" \((.+)\) has no active variants$/i,
+    translate: (match) => `Productos: "${match[1]}" (${match[2]}) no tiene variantes activas.`
+  },
+  {
+    pattern: /^(.+): "(.+)" needs (\d+) rows, more than maxRowsPerFile \((\d+)\)$/i,
+    translate: (match) => `${EXPORT_SHEETS[match[1]] ?? match[1]}: "${match[2]}" necesita ${match[3]} filas y el máximo por archivo ` +
+      `es ${match[4]}. Sube el límite en la Configuración de exportación.`
+  },
+  // Separadores de Odoo (',' y ':') en atributos y valores: validación de los formularios y de la exportación
+  {
+    pattern: /^(Products: )?(?:attribute "(.+)"|value "(.+)" of "(.+)"|valueName "(.+)"|shortName "(.+)"|(name|valueName|shortName)) cannot contain (.+?) \(Odoo uses it as a separator/i,
+    translate: (match) => {
+      const chars = match[8].replace(' or ', ' ni ');
+      const hint = match[8].includes('","') ? ' Usa, por ejemplo, "19.5" en lugar de "19,5".' : '';
+      const label = separatorFieldLabel(match);
+      // Tras "Productos:" el campo va en minúscula
+      const field = match[1] ? `Productos: ${label.charAt(0).toLowerCase()}${label.slice(1)}` : label;
+      return `${field} no puede contener ${chars}: ` +
+        `Odoo lo usa como separador al importar las variantes.${hint}`;
+    }
+  },
   // --- Sincronización con Odoo ---
+  {
+    pattern: /exportedAt is required/i,
+    translate: () => 'Falta la fecha de la exportación. Vuelve a exportar.'
+  },
+  {
+    pattern: /exportedAt must be a valid ISO date/i,
+    translate: () => 'La fecha de la exportación guardada no es válida. Vuelve a exportar.'
+  },
+  {
+    pattern: /exportedAt cannot be in the future/i,
+    translate: () => 'La fecha de la exportación está en el futuro. Revisa la hora del equipo y vuelve a exportar.'
+  },
   {
     pattern: /The product went back to draft because it has no stock, but it already exists in Odoo/i,
     translate: () => 'El producto volvió a borrador porque no tiene existencias, pero ya existe en Odoo. ' +
@@ -147,19 +218,16 @@ export function getApiErrorMessage(err: HttpErrorResponse, fallback: string): st
 }
 
 /**
- * Como getApiErrorMessage, pero separa los problemas que la API junta con "; " (validaciones
- * de la exportación) y traduce cada uno. Si el mensaje completo ya es conocido (p. ej. el de
- * colisión de SKU, que también usa "; "), se devuelve como un único elemento.
+ * Como getApiErrorMessage, pero separa los problemas que la exportación junta con "; " y
+ * traduce cada uno. Solo se parte donde empieza el problema de otra hoja ("; Products: …"):
+ * algunos mensajes llevan "; " dentro (nombre repetido, colisión de SKU).
  */
 export function getApiErrorList(err: HttpErrorResponse, fallback: string): string[] {
   const raw = getRawMessage(err);
   if (!raw) return [fallback];
 
-  const whole = translateMessage(raw);
-  if (whole) return [whole];
-
   return raw
-    .split('; ')
+    .split(EXPORT_PROBLEM_SEPARATOR)
     .map(part => part.trim())
     .filter(part => part.length > 0)
     .map(part => translateMessage(part) ?? part);

@@ -70,4 +70,21 @@ export class AppValidators {
       return Number(value) < Number(other) ? null : { lessThan: { field, otherField } };
     };
   }
+
+  /**
+   * Validador de separadores de Odoo: al importar las variantes, Odoo parte "Atributo:Valor, …"
+   * en cada "," y cada par en el primer ":". Los valores no admiten ","; el nombre del
+   * atributo tampoco admite ":". Error: { odooSeparators: { found } }.
+   *
+   *   name: ['', [Validators.required, AppValidators.noOdooSeparators([',', ':'])]]
+   */
+  static noOdooSeparators(separators: string[] = [',']): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value;
+      if (typeof value !== 'string' || !value) return null;
+
+      const found = separators.filter(separator => value.includes(separator));
+      return found.length > 0 ? { odooSeparators: { found } } : null;
+    };
+  }
 }

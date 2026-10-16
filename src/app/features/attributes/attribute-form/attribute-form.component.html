@@ -71,7 +71,13 @@
                 [class.is-invalid]="isInvalid(attributeForm, 'name')"
               >
               @if (isInvalid(attributeForm, 'name')) {
-                <div class="invalid-feedback">El nombre es requerido (mín. 3 caracteres).</div>
+                <div class="invalid-feedback">
+                  @if (attributeForm.controls['name'].hasError('odooSeparators')) {
+                    El nombre no puede contener "," ni ":": Odoo los usa como separadores al importar las variantes.
+                  } @else {
+                    El nombre es requerido (mín. 3 caracteres).
+                  }
+                </div>
               }
             </div>
 
@@ -257,6 +263,7 @@
             @if (isNewValueDuplicate('valueName') || isNewValueDuplicate('shortName')) {
               <div class="text-danger small mt-2">Ya existe un valor con ese nombre o código SKU.</div>
             }
+            <ng-container *ngTemplateOutlet="separatorHint"></ng-container>
           } @else {
             <!-- Creación: los valores se envían junto con el atributo -->
             @for (group of valuesArray.controls; track group; let i = $index) {
@@ -296,6 +303,7 @@
                 </div>
               </div>
             }
+            <ng-container *ngTemplateOutlet="separatorHint"></ng-container>
             @if (hasDuplicates()) {
               <div class="text-danger small mt-2">Hay valores con el mismo nombre o código SKU.</div>
             }
@@ -321,3 +329,12 @@
     </div>
   }
 </div>
+
+<ng-template #separatorHint>
+  @if (hasValueSeparatorError()) {
+    <div class="text-danger small mt-2">
+      Los nombres y códigos SKU de los valores no pueden contener ",": Odoo la usa como separador al importar las variantes.
+      Usa, por ejemplo, "19.5" en lugar de "19,5".
+    </div>
+  }
+</ng-template>
