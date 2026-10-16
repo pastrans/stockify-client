@@ -150,11 +150,11 @@ Odoo usa esos caracteres como separadores al importar las variantes. Conviene va
 
 **Como** administrador, **quiero** marcar de una vez como sincronizados los productos que acabo de importar en Odoo, **para** no hacerlo uno por uno.
 
-- [ ] Botón **"Marcar exportación como sincronizada"** visible cuando hay una exportación guardada (US-F3). Muestra la fecha y hora de esa exportación.
-- [ ] Confirmación previa: "¿Importaste los 4 archivos en Odoo sin errores y aplicaste el inventario?".
-- [ ] Llama a `PATCH /products/sync-exported` con `generatedAt`.
-- [ ] Resultado: cuántos se marcaron y, si `skippedIds` no está vacío, la lista de productos que **cambiaron después de exportar** (con enlace a cada uno) y el aviso de que hay que volver a exportarlos.
-- [ ] Al terminar, limpia la exportación guardada y recarga el listado.
+- [x] Botón **"Marcar exportación como sincronizada"** visible cuando hay una exportación guardada (US-F3). Muestra la fecha y hora de esa exportación.
+- [x] Confirmación previa: "¿Importaste los 4 archivos en Odoo sin errores y aplicaste el inventario?".
+- [x] Llama a `PATCH /products/sync-exported` con `generatedAt`.
+- [x] Resultado: cuántos se marcaron y, si `skippedIds` no está vacío, la lista de productos que **cambiaron después de exportar** (con enlace a cada uno) y el aviso de que hay que volver a exportarlos.
+- [x] Al terminar, limpia la exportación guardada y recarga el listado.
 
 **Hecho cuando:** después de importar, un clic marca los productos correctos y los modificados quedan señalados.
 

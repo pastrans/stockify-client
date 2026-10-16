@@ -1,10 +1,10 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
+import { DatePipe, DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { NgbDropdownModule, NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { Observable, catchError, debounceTime, distinctUntilChanged, forkJoin, map, of } from 'rxjs';
 import Swal from 'sweetalert2';
 import {
   PRODUCT_STATUS_OPTIONS,
@@ -40,6 +40,7 @@ const VIEW_STORAGE_KEY = 'stockify.products.view';
   imports: [
     RouterLink,
     ReactiveFormsModule,
+    DatePipe,
     DecimalPipe,
     NgTemplateOutlet,
     NgbDropdownModule,
@@ -67,6 +68,9 @@ export class ProductsComponent implements OnInit {
   errorMessage = signal<string | null>(null);
   // Generar el .zip puede tardar con muchos productos
   isExporting = signal<boolean>(false);
+  isSyncingExport = signal<boolean>(false);
+  // Exportación total pendiente de marcar como sincronizada (US-F4)
+  readonly lastExport = this.exportService.lastExport;
   viewMode = signal<ViewMode>(this.readStoredView());
 
   // Paginación (12 encaja en las columnas del kanban: 2, 3 o 4 por fila)
@@ -259,6 +263,110 @@ export class ProductsComponent implements OnInit {
       theme: 'dark',
       icon: 'success',
       title: 'Exportación generada',
+      html: container,
+      confirmButtonText: 'Entendido',
+      width: '40rem'
+    });
+  }
+
+  // Marca como sincronizados los productos de la última exportación que no cambiaron después (US-F4)
+  async syncLastExport(): Promise<void> {
+    const pending = this.lastExport();
+    if (!pending || this.isSyncingExport()) return;
+
+    const confirm = await Swal.fire({
+      theme: 'dark',
+      icon: 'question',
+      title: '¿Marcar la exportación como sincronizada?',
+      text: '¿Importaste los 4 archivos en Odoo sin errores y aplicaste el inventario ("Aplicar todo")?',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, marcar como sincronizada',
+      cancelButtonText: 'Cancelar'
+    });
+    if (!confirm.isConfirmed) return;
+
+    this.isSyncingExport.set(true);
+    this.productService.syncExported(pending.generatedAt).subscribe({
+      next: (result) => {
+        this.exportService.clearLastExport();
+        this.loadProducts();
+        this.loadSkippedProducts(result.skippedIds).subscribe(skipped => {
+          this.isSyncingExport.set(false);
+          this.showSyncExportResult(result.updatedCount, skipped);
+        });
+      },
+      error: (err) => {
+        this.isSyncingExport.set(false);
+        showApiErrorAlert(err, 'No se pudo marcar la exportación', 'Error al marcar la exportación como sincronizada.');
+      }
+    });
+  }
+
+  async discardLastExport(): Promise<void> {
+    const confirm = await Swal.fire({
+      theme: 'dark',
+      icon: 'warning',
+      title: '¿Descartar la exportación pendiente?',
+      text: 'Los productos no se marcarán como sincronizados. Hazlo solo si no vas a importar ese archivo en Odoo.',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, descartar',
+      cancelButtonText: 'Cancelar'
+    });
+    if (confirm.isConfirmed) this.exportService.clearLastExport();
+  }
+
+  // Nombre de cada producto omitido; si no se puede cargar, se muestra solo su id
+  private loadSkippedProducts(ids: number[]): Observable<{ id: number; label: string }[]> {
+    if (ids.length === 0) return of([]);
+    return forkJoin(ids.map(id =>
+      this.productService.getProductById(id).pipe(
+        map(product => ({ id, label: `${product.name} (${product.skuPrefix})` })),
+        catchError(() => of({ id, label: `Producto #${id}` }))
+      )
+    ));
+  }
+
+  private showSyncExportResult(updatedCount: number, skipped: { id: number; label: string }[]): void {
+    const container = document.createElement('div');
+    container.className = 'text-start small';
+
+    const summary = document.createElement('p');
+    summary.textContent = updatedCount === 0
+      ? 'No se marcó ningún producto: los de esa exportación ya estaban sincronizados o cambiaron después de exportar.'
+      : `Se ${updatedCount === 1 ? 'marcó 1 producto' : `marcaron ${updatedCount} productos`} como sincronizados.`;
+    container.appendChild(summary);
+
+    if (skipped.length > 0) {
+      const warning = document.createElement('p');
+      warning.className = 'text-warning mb-2';
+      warning.textContent = skipped.length === 1
+        ? 'Este producto cambió después de exportar y no se marcó. Vuelve a exportarlo e impórtalo antes de marcarlo:'
+        : `Estos ${skipped.length} productos cambiaron después de exportar y no se marcaron. Vuelve a exportarlos e impórtalos antes de marcarlos:`;
+      container.appendChild(warning);
+
+      const list = document.createElement('ul');
+      list.className = 'mb-0 ps-3';
+      for (const product of skipped) {
+        const item = document.createElement('li');
+        const link = document.createElement('a');
+        link.href = `/products/${product.id}/edit`;
+        link.textContent = product.label;
+        // Navegación interna sin recargar la aplicación
+        link.addEventListener('click', (event) => {
+          event.preventDefault();
+          Swal.close();
+          this.router.navigate(['/products', product.id, 'edit']);
+        });
+        item.appendChild(link);
+        list.appendChild(item);
+      }
+      container.appendChild(list);
+    }
+
+    Swal.fire({
+      theme: 'dark',
+      icon: skipped.length > 0 ? 'warning' : 'success',
+      title: 'Exportación sincronizada',
       html: container,
       confirmButtonText: 'Entendido',
       width: '40rem'
