@@ -1,6 +1,6 @@
 # Exportación a Odoo: trabajo pendiente en el frontend
 
-**Estado:** listo para empezar · **Fecha:** 2026-10-16
+**Estado:** terminado · **Fecha:** 2026-10-16
 **Backend:** terminado en `../Stockify-API` (commit `b2aaffe`). Requerimientos completos y decisiones en `../Stockify-API/docs/odoo-export-requirements.md`; colección de Postman en `../Stockify-API/docs/postman/Stockify-API.postman_collection.json`.
 
 ## Cómo usar este documento
@@ -217,9 +217,9 @@ Agregar a `FRIENDLY_MESSAGES` en `shared/utils/api-error.ts` (mensajes exactos d
 
 ## US-F8 · Actualizar el `CLAUDE.md` del cliente
 
-- [ ] Tabla de API: `settings` (`GET/PUT /export`), `exports` (`POST /full`, `POST /products/:id`, cabeceras) y `products` (`PATCH /sync-exported`, `warning` del `unsync`).
-- [ ] Reglas de dominio: existencias solo de variantes sin `syncedAt`, `syncedAt` en variantes, validación de `,` y `:` en atributos y nombres de producto únicos para exportar.
-- [ ] "Estado del proyecto": exportación a Odoo hecha.
+- [x] Tabla de API: `settings` (`GET/PUT /export`), `exports` (`POST /full`, `POST /products/:id`, cabeceras) y `products` (`PATCH /sync-exported`, `warning` del `unsync`).
+- [x] Reglas de dominio: existencias solo de variantes sin `syncedAt`, `syncedAt` en variantes, validación de `,` y `:` en atributos y nombres de producto únicos para exportar.
+- [x] "Estado del proyecto": exportación a Odoo hecha.
 
 ## Cómo probar
 

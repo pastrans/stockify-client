@@ -1,6 +1,6 @@
 # Stockify Client
 
-SPA en Angular para **Stockify**: digitalización de inventario retail (catálogo matricial de variantes con existencias por variante en Tienda/Bodega) con exportación a **Odoo ERP v18+**. Corresponde a la Épica EP08 del backlog (`Stockify_Backlog_Ingenieria.pdf`).
+SPA en Angular para **Stockify**: digitalización de inventario retail (catálogo matricial de variantes con existencias por variante en Tienda/Bodega) con exportación a **Odoo 19** mediante archivos `.xlsx` que se importan a mano. Corresponde a la Épica EP08 del backlog (`Stockify_Backlog_Ingenieria.pdf`).
 
 - Backend: repositorio hermano `../Stockify-API` (Node + Express, Clean Architecture en 4 capas, Prisma 7 + PostgreSQL, `exactOptionalPropertyTypes: true`). El esquema de referencia está en `../Stockify-API/prisma/schema.prisma`.
 
@@ -14,13 +14,14 @@ SPA en Angular para **Stockify**: digitalización de inventario retail (catálog
 ## Convenciones
 
 - Los nombres de carpetas y archivos van en inglés: `features/<feature>/`, `core/services/<x>.service.ts`, `shared/models/<x>.model.ts`.
-- `core/`: guards (`AuthGuard`, `PublicGuard`), `authInterceptor` (Bearer token) y servicios. `shared/`: `main-layout` (menú horizontal superior), `sequence-input` (campo de secuencia con botones ±), `image-upload` (subir archivo o tomar fotografía, seguimiento del procesamiento y vista ampliada; usa los modales `camera-capture` e `image-preview`), `search-select` y `multi-search-select` (selects con buscador que funcionan como controles reactivos y reciben `SelectOption[]`; emiten `(opened)` para recargar el catálogo al abrirse, con `[loading]` mientras tanto; usarlos en lugar de `<select>` cuando la lista es larga), la directiva `appImgFallback` (imagen por defecto cuando un `<img>` remoto no carga; usarla en toda imagen que venga de la API), modelos, `AppValidators` y `utils/api-error.ts`.
+- `core/`: guards (`AuthGuard`, `PublicGuard`), `authInterceptor` (Bearer token) y servicios. `ExportService` guarda además la última exportación total (`lastExport`, signal con respaldo en `localStorage`). `shared/`: `main-layout` (menú horizontal superior), `sequence-input` (campo de secuencia con botones ±), `image-upload` (subir archivo o tomar fotografía, seguimiento del procesamiento y vista ampliada; usa los modales `camera-capture` e `image-preview`), `search-select` y `multi-search-select` (selects con buscador que funcionan como controles reactivos y reciben `SelectOption[]`; emiten `(opened)` para recargar el catálogo al abrirse, con `[loading]` mientras tanto; usarlos en lugar de `<select>` cuando la lista es larga), la directiva `appImgFallback` (imagen por defecto cuando un `<img>` remoto no carga; usarla en toda imagen que venga de la API), modelos, `AppValidators` (incluye `noOdooSeparators`) y las utilidades `api-error.ts`, `error-alert.ts` (`showApiErrorAlert`: SweetAlert con lista de problemas), `blob-error.ts` (`parseBlobError`) y `download-file.ts` (`downloadBlob`).
 - Estado con Angular Signals (`signal`, `computed`), Reactive Forms e `inject()` en lugar de constructor.
 - Rol fijo `'ADMIN'` en los formularios de usuario. No existe `role.guard`.
 - Las rutas públicas cuelgan de `/auth/*` (`/auth/login`, `/auth/reset-password`). Las redirecciones de sesión van a `/auth/login`, nunca a `/login`.
 - Cada listado usa pestañas de estado (Todos / Habilitados / Inhabilitados) con el parámetro `available`. La tarjeta de filtros es `app-list-filters` (pestañas, campos propios proyectados y "Limpiar filtros"), con `app-search-input` para el buscador y `toAvailableParam()` (`shared/models/list-filter.model.ts`) para el parámetro. No se añaden buscadores de texto que no soporte la API.
 - La eliminación es suave (soft-delete): el registro queda con `available: false`.
 - Los textos de la UI van en español.
+- Menú "Odoo" (desplegable del `main-layout`): `/settings` (configuración de exportación) y `/odoo-guide` (guía estática de importación). Las acciones de Odoo de un producto (exportar, marcar sincronizado, quitar sincronización) viven en `features/products/product-odoo-actions.service.ts` y las usan el formulario y el menú ⚙ del listado.
 
 ## API (`/api/v1`)
 
@@ -30,10 +31,12 @@ SPA en Angular para **Stockify**: digitalización de inventario retail (catálog
 | `users` | CRUD + `PATCH /:id/status`; paginado con `page`, `limit` y `available` |
 | `attributes` | CRUD; paginado con `page`, `limit`, `available` y `search` (nombre del atributo o `valueName`/`shortName` de sus valores activos); valores: `POST /:id/values`, `PUT/DELETE /values/:valueId` |
 | `pos-categories` | CRUD (jerarquía con `parentId`, `color` como int de Odoo, `sequence`) |
-| `products` | CRUD de plantillas; paginado con `page`, `limit`, `available`, `search`, `status` y `posCategoryId`; `PATCH /sync` (`productId` o `productIds`); `PATCH /:id/unsync`; variantes: `PUT/DELETE /variants/:variantId`, `PATCH /variants/:variantId/stock` |
+| `products` | CRUD de plantillas; paginado con `page`, `limit`, `available`, `search`, `status` y `posCategoryId`; `PATCH /sync` (`productIds`) → `{ updatedCount, syncedIds }`; `PATCH /sync-exported` (`{ exportedAt }`) → además `skippedIds`; `PATCH /:id/unsync` (si vuelve a `draft`, la respuesta trae `warning`); variantes: `PUT/DELETE /variants/:variantId`, `PATCH /variants/:variantId/stock` |
+| `settings` | `GET /export` (valores por defecto con `updatedAt: null` si nunca se guardaron), `PUT /export` (campos parciales) |
+| `exports` | `POST /full` (activos no sincronizados) y `POST /products/:id` → `.zip` binario con las cabeceras `Content-Disposition` (nombre) y `X-Export-Generated-At` (hora, para `sync-exported`), expuestas por CORS |
 | `uploads` | `POST /image` (multipart, campo `file`; JPG/PNG/WebP ≤ 5 MB) → `{ uploadId, key, status: 'processing' }`; `GET /:uploadId` → `processing`, `ready` (con `previewUrl`, válida 15 min) o `failed` (con `error`) |
 
-Los errores llegan como `{ error: string }` (mensaje en inglés), con 400 para las reglas de negocio. Se leen con `getApiErrorMessage(err, fallback)` (`shared/utils/api-error.ts`), que también acepta `{ message }` y traduce al español los mensajes de negocio conocidos. Los mensajes nuevos que necesiten traducción se añaden ahí.
+Los errores llegan como `{ error: string }` (mensaje en inglés), con 400 para las reglas de negocio. Se leen con `getApiErrorMessage(err, fallback)` (`shared/utils/api-error.ts`), que también acepta `{ message }` y traduce al español los mensajes de negocio conocidos. Los mensajes nuevos que necesiten traducción se añaden ahí. Las validaciones de la exportación llegan en un solo 400 separadas por `; ` y cada una empieza con el nombre de su hoja (`Products: …`): `getApiErrorList` las separa y traduce, y `showApiErrorAlert` las muestra como lista. Con `responseType: 'blob'` el cuerpo del error también es un `Blob`: `parseBlobError()` lo convierte en JSON antes de leerlo.
 
 Imágenes de producto y variante: se suben primero a `uploads` y el formulario envía `mainImageUploadId` / `imageUploadId` (`null` para quitarla) solo cuando la subida está `ready`. "Guardar" se deshabilita mientras la imagen está `processing` o `failed`. Para mostrar imágenes guardadas se usa `mainImageUrl` / `imageUrl`, nunca la key.
 
@@ -69,7 +72,15 @@ Imágenes de producto y variante: se suben primero a `uploads` y el formulario e
   - `PATCH /:id/unsync` (solo uno a la vez) vuelve a `stock_locked` si hay stock y a `draft` si no lo hay.
   - Cuando el producto está bloqueado (`isLocked`: estado distinto de `draft` o con stock), `skuPrefix` no se puede editar, no se pueden añadir ni quitar atributos (sí añadir valores nuevos a los existentes) y no se pueden borrar variantes con stock. La UI debe deshabilitar esas acciones, no solo mostrar el error del servidor.
 
+- **Exportación a Odoo** (requerimientos en `../Stockify-API/docs/odoo-export-requirements.md`):
+  - El `.zip` trae `1-Product Attribute`, `2-Point of Sale Category`, `3-Products` y `4-Existencias` (`-NN` por parte), que se importan en ese orden.
+  - Exportar **no** cambia el estado. Tras importar sin errores, el usuario marca los productos: la exportación total con `sync-exported` (aviso en el listado) y un producto con `sync`. `sync-exported` omite (`skippedIds`) los que cambiaron después de exportar.
+  - `ProductVariant.syncedAt` marca las variantes que ya están en Odoo. Sus existencias solo se exportan una vez (variantes sin `syncedAt` y con cantidad > 0); después el stock se ajusta en Odoo. Un producto `synced` con variantes nuevas se puede volver a exportar y a marcar.
+  - Odoo usa `,` y `:` como separadores: el nombre del atributo no admite ninguno y `valueName`/`shortName` no admiten `,` (validado en el formulario y en la API).
+  - Dos productos con el mismo nombre no se pueden exportar (Odoo asigna las variantes por nombre).
+  - `externalIdPrefix` no se puede cambiar si hay algún producto `synced` (activo o no): la pantalla de configuración deshabilita el campo.
+
 ## Estado del proyecto
 
-Hecho: base de la SPA, autenticación (login/reset), layout en dark mode, gestión de usuarios, categorías POS, atributos con sus valores, plantillas de producto con matriz de variantes y existencias por variante, y subida de imágenes (archivo o cámara, con fotos por color).
-Pendiente (EP08): exportación a Odoo. El conteo físico no forma parte de Stockify: se registran las existencias en cada producto y los recuentos posteriores se hacen en Odoo. Los requerimientos de la exportación (ajustes, formato de archivos, endpoints propuestos y decisiones pendientes) están en `../Stockify-API/docs/odoo-export-requirements.md`, con los archivos de ejemplo de Odoo en `../Stockify-API/docs/odoo-samples/`.
+Hecho: base de la SPA, autenticación (login/reset), layout en dark mode, gestión de usuarios, categorías POS, atributos con sus valores, plantillas de producto con matriz de variantes y existencias por variante, subida de imágenes (archivo o cámara, con fotos por color) y exportación a Odoo (configuración, exportación total y por producto, sincronización y guía de importación). El plan del frontend de la exportación está en `docs/odoo-export-frontend.md`.
+El conteo físico no forma parte de Stockify: se registran las existencias en cada producto y los recuentos posteriores se hacen en Odoo. Fuera de esta versión: exportación "Delta" (D-02) y sincronización en lote desde el listado.
