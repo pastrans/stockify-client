@@ -74,6 +74,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent)
       },
       {
+        path: 'odoo-guide',
+        loadComponent: () => import('./features/odoo-guide/odoo-guide.component').then(m => m.OdooGuideComponent)
+      },
+      {
         path: 'users',
         loadComponent: () => import('./features/users/users.component').then(m => m.UsersComponent)
       },

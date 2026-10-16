@@ -139,7 +139,7 @@ Odoo usa esos caracteres como separadores al importar las variantes. Conviene va
 **Como** administrador, **quiero** descargar en un `.zip` todos los productos pendientes de Odoo, **para** hacer la carga inicial.
 
 - [x] Botón **"Exportar a Odoo"** en el listado de productos.
-- [x] Llama a `POST /exports/full`, descarga el `.zip` con su nombre y muestra un aviso con los pasos siguientes (importar en orden y luego marcar como sincronizados), con enlace a la guía (US-F6). *El enlace se agrega en US-F6.*
+- [x] Llama a `POST /exports/full`, descarga el `.zip` con su nombre y muestra un aviso con los pasos siguientes (importar en orden y luego marcar como sincronizados), con enlace a la guía (US-F6).
 - [x] Guarda `generatedAt` de la última exportación (Signal en un servicio y `localStorage`, envuelto en `try/catch`) para US-F4.
 - [x] Estado de carga mientras se genera (puede tardar con muchos productos).
 - [x] Errores 400 mostrados como lista (los problemas vienen separados por `; `), p. ej. nombres de producto repetidos o valores con coma.
@@ -176,16 +176,16 @@ Odoo usa esos caracteres como separadores al importar las variantes. Conviene va
 
 Contenido estático (sin endpoint), en una ruta propia (p. ej. `/odoo-guide`) enlazada desde el menú y desde los avisos de exportación. Pasos mínimos:
 
-- [ ] **Antes de la primera importación:** en Odoo no debe haber atributos con el mismo nombre que los de Stockify (p. ej. el "Color" de los datos demo). Si existen, renombrarlos o archivarlos: Odoo enlaza los valores de las variantes por nombre y los mezclaría.
-- [ ] **Orden obligatorio:** importar 1 → 2 → 3 → 4, y si un archivo viene en partes (`-01`, `-02`…), todas las partes antes de pasar al siguiente.
-- [ ] **Dónde importar cada archivo:**
+- [x] **Antes de la primera importación:** en Odoo no debe haber atributos con el mismo nombre que los de Stockify (p. ej. el "Color" de los datos demo). Si existen, renombrarlos o archivarlos: Odoo enlaza los valores de las variantes por nombre y los mezclaría.
+- [x] **Orden obligatorio:** importar 1 → 2 → 3 → 4, y si un archivo viene en partes (`-01`, `-02`…), todas las partes antes de pasar al siguiente.
+- [x] **Dónde importar cada archivo:**
   - 1-Product Attribute: Inventario → Configuración → Atributos → Importar.
   - 2-Point of Sale Category: Punto de Venta → Configuración → Categorías de PdV → Importar.
   - 3-Products: Inventario → Productos → Productos → Importar.
   - 4-Existencias: **Inventario → Operaciones → Inventario físico → Importar**, y al terminar pulsar **Apply All** (Aplicar todo). Sin ese paso, la existencia no cambia.
-- [ ] Revisar que Odoo no muestre columnas sin mapear importantes antes de pulsar "Importar". `Linked PoS Configurations` puede quedar sin mapear según la edición de Odoo, y eso es normal.
-- [ ] **Después de importar sin errores:** marcar los productos como sincronizados en Stockify (US-F4 o US-F5).
-- [ ] **Errores frecuentes:**
+- [x] Revisar que Odoo no muestre columnas sin mapear importantes antes de pulsar "Importar". `Linked PoS Configurations` puede quedar sin mapear según la edición de Odoo, y eso es normal.
+- [x] **Después de importar sin errores:** marcar los productos como sincronizados en Stockify (US-F4 o US-F5).
+- [x] **Errores frecuentes:**
   - "Quant's editing is restricted": se intentó reimportar existencias de variantes que ya estaban en Odoo. Quitar esas filas; los recuentos posteriores se hacen en Odoo.
   - Variantes con un solo atributo visible o atributos duplicados: hay un atributo con el mismo nombre en Odoo (ver el primer paso).
 

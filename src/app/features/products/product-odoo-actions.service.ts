@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import Swal from 'sweetalert2';
 import { Product } from '../../shared/models/product.model';
@@ -29,6 +30,7 @@ const toast = Swal.mixin({
 export class ProductOdooActionsService {
   private readonly productService = inject(ProductService);
   private readonly exportService = inject(ExportService);
+  private readonly router = inject(Router);
 
   // Variantes activas que aún no están en Odoo: sus existencias se exportarán
   pendingVariantsCount(product: Product): number {
@@ -153,7 +155,12 @@ export class ProductOdooActionsService {
       title: 'Exportación generada',
       html: container,
       confirmButtonText: 'Entendido',
+      showDenyButton: true,
+      denyButtonText: 'Ver guía de importación',
+      denyButtonColor: '#0dcaf0',
       width: '40rem'
+    }).then(result => {
+      if (result.isDenied) this.router.navigate(['/odoo-guide']);
     });
   }
 }

@@ -1,0 +1,9 @@
+.step-number {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+}
+
+.menu-path .bi-chevron-right {
+  font-size: 0.7rem;
+}

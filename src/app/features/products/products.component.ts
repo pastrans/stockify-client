@@ -269,7 +269,12 @@ export class ProductsComponent implements OnInit {
       title: 'Exportación generada',
       html: container,
       confirmButtonText: 'Entendido',
+      showDenyButton: true,
+      denyButtonText: 'Ver guía de importación',
+      denyButtonColor: '#0dcaf0',
       width: '40rem'
+    }).then(result => {
+      if (result.isDenied) this.router.navigate(['/odoo-guide']);
     });
   }
 

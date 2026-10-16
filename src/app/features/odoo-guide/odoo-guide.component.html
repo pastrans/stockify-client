@@ -1,0 +1,156 @@
+<div class="container mt-4" data-bs-theme="dark">
+  <!-- Encabezado -->
+  <div class="mb-4">
+    <h2 class="fw-bold mb-1">Guía de importación en Odoo</h2>
+    <p class="text-secondary small mb-0">
+      Pasos para cargar en Odoo 19 los archivos del <code>.zip</code> que genera "Exportar a Odoo".
+    </p>
+  </div>
+
+  <!-- ANTES DE LA PRIMERA IMPORTACIÓN -->
+  <div class="card shadow-sm border-warning-subtle bg-dark-subtle mb-3">
+    <div class="card-body">
+      <h5 class="fw-semibold mb-3"><i class="bi bi-exclamation-triangle me-2 text-warning"></i>Antes de la primera importación</h5>
+      <ul class="small mb-0 ps-3">
+        <li class="mb-2">
+          <strong>En Odoo no debe haber atributos con el mismo nombre que los de Stockify</strong> (p. ej. el "Color" de los
+          datos de demostración). Si existen, renómbralos o archívalos: Odoo enlaza los valores de las variantes por nombre y
+          los mezclaría con los de Stockify.
+        </li>
+        <li class="mb-2">
+          Las ubicaciones de Tienda y Bodega y el Punto de Venta deben existir en Odoo con el mismo nombre que en la
+          <a routerLink="/settings">Configuración de exportación</a>.
+        </li>
+        <li>
+          Elige el prefijo de ID externo antes de importar: deja de poder cambiarse en cuanto hay un producto sincronizado.
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ORDEN OBLIGATORIO -->
+  <div class="card shadow-sm border-secondary bg-dark-subtle mb-3">
+    <div class="card-body">
+      <h5 class="fw-semibold mb-2"><i class="bi bi-sort-numeric-down me-2 text-primary"></i>Orden obligatorio</h5>
+      <p class="small mb-2">
+        Cada archivo usa los registros del anterior, así que se importan en el orden de su número: <strong>1 → 2 → 3 → 4</strong>.
+      </p>
+      <p class="small mb-0 text-secondary">
+        Si un archivo viene en partes (<code>3-Products-01.xlsx</code>, <code>3-Products-02.xlsx</code>…), importa todas sus
+        partes antes de pasar al siguiente número. El límite de filas por parte se cambia en la Configuración.
+      </p>
+    </div>
+  </div>
+
+  <!-- CÓMO IMPORTAR UN ARCHIVO -->
+  <div class="card shadow-sm border-secondary bg-dark-subtle mb-3">
+    <div class="card-body">
+      <h5 class="fw-semibold mb-2"><i class="bi bi-upload me-2 text-primary"></i>Cómo importar cada archivo</h5>
+      <ol class="small mb-0 ps-3">
+        <li class="mb-1">Abre en Odoo la vista de lista del menú indicado para ese archivo.</li>
+        <li class="mb-1">Pulsa el engranaje (<i class="bi bi-gear"></i>) junto al título y elige <strong>Importar registros</strong>.</li>
+        <li class="mb-1">Sube el archivo <code>.xlsx</code>. Odoo reconoce las columnas por su encabezado.</li>
+        <li class="mb-1">
+          Revisa que no queden <strong>columnas importantes sin mapear</strong> y pulsa <strong>Probar</strong>.
+        </li>
+        <li>Si la prueba no muestra errores, pulsa <strong>Importar</strong>.</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- ARCHIVOS -->
+  @for (file of files; track file.order) {
+    <div class="card shadow-sm border-secondary bg-dark-subtle mb-3">
+      <div class="card-body d-flex gap-3">
+        <span class="step-number rounded-circle bg-primary text-white fw-bold d-flex align-items-center justify-content-center">
+          {{ file.order }}
+        </span>
+        <div class="flex-grow-1">
+          <h5 class="fw-semibold mb-1">
+            <code class="text-info">{{ file.order }}-{{ file.name }}-NN.xlsx</code>
+          </h5>
+          <p class="small text-secondary mb-2">{{ file.description }}</p>
+          <div class="menu-path small mb-2 d-flex flex-wrap align-items-center gap-1">
+            <i class="bi bi-signpost-split me-1 text-primary"></i>
+            @for (item of file.menu; track item; let last = $last) {
+              <span class="fw-semibold">{{ item }}</span>
+              @if (!last) {
+                <i class="bi bi-chevron-right text-secondary"></i>
+              }
+            }
+            <i class="bi bi-chevron-right text-secondary"></i>
+            <span class="fw-semibold">Importar registros</span>
+          </div>
+          <ul class="small mb-0 ps-3">
+            @for (note of file.notes; track note) {
+              <li class="mb-1">{{ note }}</li>
+            }
+          </ul>
+
+          @if (file.order === 4) {
+            <div class="alert alert-warning small mt-3 mb-0 d-flex align-items-start gap-2" role="alert">
+              <i class="bi bi-exclamation-diamond"></i>
+              <span>
+                Al terminar de importar, en <strong>Inventario físico</strong> pulsa <strong>Aplicar todo</strong>
+                (<em>Apply All</em>). Sin ese paso, la existencia de los productos no cambia.
+              </span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- DESPUÉS DE IMPORTAR -->
+  <div class="card shadow-sm border-info-subtle bg-dark-subtle mb-3">
+    <div class="card-body">
+      <h5 class="fw-semibold mb-3"><i class="bi bi-cloud-check me-2 text-info"></i>Después de importar sin errores</h5>
+      <p class="small mb-2">Marca los productos como sincronizados en Stockify. Así se congelan sus SKU y códigos de barras:</p>
+      <ul class="small mb-3 ps-3">
+        <li class="mb-1">
+          <strong>Exportación total:</strong> en <a routerLink="/products">Productos</a>, pulsa
+          <strong>Marcar como sincronizada</strong> en el aviso de la exportación pendiente. Los productos que cambiaron
+          después de exportar no se marcan: vuelve a exportarlos.
+        </li>
+        <li>
+          <strong>Un producto:</strong> en su pantalla, menú <strong>Odoo → Marcar como sincronizado</strong>.
+        </li>
+      </ul>
+      <p class="small text-secondary mb-0">
+        Las existencias de cada variante se exportan una sola vez. Después de la primera importación, los recuentos y
+        ajustes de stock se hacen en Odoo (Inventario físico).
+      </p>
+    </div>
+  </div>
+
+  <!-- ERRORES FRECUENTES -->
+  <div class="card shadow-sm border-danger-subtle bg-dark-subtle mb-4">
+    <div class="card-body">
+      <h5 class="fw-semibold mb-3"><i class="bi bi-bug me-2 text-danger"></i>Errores frecuentes</h5>
+      <dl class="small mb-0">
+        <dt>"Quant's editing is restricted"</dt>
+        <dd class="text-secondary mb-3">
+          Se intentó importar otra vez las existencias de variantes que ya estaban en Odoo. Quita esas filas del archivo:
+          los recuentos posteriores se hacen en Odoo.
+        </dd>
+
+        <dt>Variantes con un solo atributo visible o atributos repetidos en un producto</dt>
+        <dd class="text-secondary mb-3">
+          En Odoo hay otro atributo con el mismo nombre que uno de Stockify (ver "Antes de la primera importación").
+          Renombra o archiva el de Odoo y vuelve a importar el archivo de productos.
+        </dd>
+
+        <dt>La ubicación o el producto no se encuentran al importar las existencias</dt>
+        <dd class="text-secondary mb-3">
+          La ubicación debe existir en Odoo con su nombre completo (p. ej. <code>WH/Stock</code>), y el archivo de productos
+          debe estar importado antes: Odoo busca cada variante por su referencia interna (SKU).
+        </dd>
+
+        <dt>Las existencias no cambiaron después de importar</dt>
+        <dd class="text-secondary mb-0">
+          Falta pulsar <strong>Aplicar todo</strong> en Inventario físico.
+        </dd>
+      </dl>
+    </div>
+  </div>
+</div>
