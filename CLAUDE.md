@@ -1,6 +1,6 @@
 # Stockify Client
 
-SPA en Angular para **Stockify**: digitalización de inventario retail (catálogo matricial de variantes, conteo físico dual Tienda/Bodega) con exportación a **Odoo ERP v18+**. Corresponde a la Épica EP08 del backlog (`Stockify_Backlog_Ingenieria.pdf`).
+SPA en Angular para **Stockify**: digitalización de inventario retail (catálogo matricial de variantes con existencias por variante en Tienda/Bodega) con exportación a **Odoo ERP v18+**. Corresponde a la Épica EP08 del backlog (`Stockify_Backlog_Ingenieria.pdf`).
 
 - Backend: repositorio hermano `../Stockify-API` (Node + Express, Clean Architecture en 4 capas, Prisma 7 + PostgreSQL, `exactOptionalPropertyTypes: true`). El esquema de referencia está en `../Stockify-API/prisma/schema.prisma`.
 
@@ -72,4 +72,4 @@ Imágenes de producto y variante: se suben primero a `uploads` y el formulario e
 ## Estado del proyecto
 
 Hecho: base de la SPA, autenticación (login/reset), layout en dark mode, gestión de usuarios, categorías POS, atributos con sus valores, plantillas de producto con matriz de variantes y existencias por variante, y subida de imágenes (archivo o cámara, con fotos por color).
-Pendiente (EP08): conteo físico de stock y exportación a Odoo. Los requerimientos de la exportación (ajustes, formato de archivos, endpoints propuestos y decisiones pendientes) están en `../Stockify-API/docs/odoo-export-requirements.md`, con los archivos de ejemplo de Odoo en `../Stockify-API/docs/odoo-samples/`.
+Pendiente (EP08): exportación a Odoo. El conteo físico no forma parte de Stockify: se registran las existencias en cada producto y los recuentos posteriores se hacen en Odoo. Los requerimientos de la exportación (ajustes, formato de archivos, endpoints propuestos y decisiones pendientes) están en `../Stockify-API/docs/odoo-export-requirements.md`, con los archivos de ejemplo de Odoo en `../Stockify-API/docs/odoo-samples/`.
