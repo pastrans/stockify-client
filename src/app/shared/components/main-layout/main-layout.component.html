@@ -46,6 +46,22 @@
               <i class="bi bi-people me-2"></i> Usuarios
             </a>
           </li>
+          <!-- Exportación a Odoo: el toggle se marca activo si lo está alguna de sus entradas -->
+          <li class="nav-item" ngbDropdown routerLinkActive #odooMenu="routerLinkActive">
+            <button
+              type="button"
+              class="nav-link px-3 d-flex align-items-center"
+              [class.active]="odooMenu.isActive"
+              ngbDropdownToggle
+            >
+              <i class="bi bi-cloud-arrow-up me-2"></i> Odoo
+            </button>
+            <div ngbDropdownMenu>
+              <a ngbDropdownItem routerLink="/settings" routerLinkActive="active" (click)="isMenuCollapsed = true">
+                <i class="bi bi-gear me-2"></i> Configuración de exportación
+              </a>
+            </div>
+          </li>
         </ul>
 
         <!-- Botón Cerrar Sesión -->

@@ -125,12 +125,12 @@ Odoo usa esos caracteres como separadores al importar las variantes. Conviene va
 
 **Como** administrador, **quiero** configurar cómo se generan los archivos de Odoo, **para** que coincidan con mi instalación (ubicaciones, punto de venta, idioma).
 
-- [ ] Ruta nueva (p. ej. `/settings`) con entrada en el menú del `main-layout`.
-- [ ] Formulario reactivo con los siete campos y sus validaciones (tabla de ajustes).
-- [ ] Si `updatedAt` es `null`, indicar que se están usando los valores por defecto.
-- [ ] Guardar con `PUT` y mostrar confirmación (sweetalert2).
-- [ ] Explicar en la propia pantalla que el prefijo de IDs externos no se puede cambiar una vez que hay productos sincronizados, y mostrar el error traducido si la API lo rechaza.
-- [ ] Ayudas cortas por campo: ubicaciones con el nombre completo de Odoo (`WH/Stock`), límite de filas, idioma de los encabezados.
+- [x] Ruta nueva (p. ej. `/settings`) con entrada en el menú del `main-layout`.
+- [x] Formulario reactivo con los siete campos y sus validaciones (tabla de ajustes).
+- [x] Si `updatedAt` es `null`, indicar que se están usando los valores por defecto.
+- [x] Guardar con `PUT` y mostrar confirmación (sweetalert2).
+- [x] Explicar en la propia pantalla que el prefijo de IDs externos no se puede cambiar una vez que hay productos sincronizados, y mostrar el error traducido si la API lo rechaza.
+- [x] Ayudas cortas por campo: ubicaciones con el nombre completo de Odoo (`WH/Stock`), límite de filas, idioma de los encabezados.
 
 **Hecho cuando:** se pueden leer y guardar los ajustes, y los errores de validación se ven en español.
 

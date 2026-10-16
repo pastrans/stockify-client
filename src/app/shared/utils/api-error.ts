@@ -1,5 +1,14 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
+// Nombres en la UI de los campos de la configuración de exportación
+const SETTINGS_FIELD_LABELS: Record<string, string> = {
+  warehouseLocation: 'Ubicación de Bodega',
+  storeLocation: 'Ubicación de Tienda',
+  linkedPosConfig: 'Punto de Venta de Odoo',
+  externalIdPrefix: 'Prefijo de ID externo',
+  attributeCategory: 'Categoría de atributo'
+};
+
 // Traducciones de los mensajes de negocio (400) que devuelve la API en inglés
 const FRIENDLY_MESSAGES: { pattern: RegExp; translate: (match: RegExpMatchArray) => string }[] = [
   {
@@ -56,6 +65,31 @@ const FRIENDLY_MESSAGES: { pattern: RegExp; translate: (match: RegExpMatchArray)
   {
     pattern: /Cannot update stock: variant is inactive/i,
     translate: () => 'No se pueden actualizar las existencias de una variante inactiva.'
+  },
+  // --- Configuración de exportación ---
+  {
+    pattern: /externalIdPrefix cannot be changed: (\d+) product\(s\) are already synced with Odoo using "(.+)"/i,
+    translate: (match) => `No se puede cambiar el prefijo de ID externo: ${match[1] === '1' ? 'hay 1 producto sincronizado' : `hay ${match[1]} productos sincronizados`} con Odoo usando "${match[2]}".`
+  },
+  {
+    pattern: /externalIdPrefix can only contain letters, numbers, "_" and "-"/i,
+    translate: () => 'El prefijo de ID externo solo admite letras, números, "_" y "-".'
+  },
+  {
+    pattern: /language must be one of/i,
+    translate: () => 'El idioma de exportación debe ser inglés o español.'
+  },
+  {
+    pattern: /maxRowsPerFile must be an integer greater than 0/i,
+    translate: () => 'El máximo de filas por archivo debe ser un número entero mayor que 0.'
+  },
+  {
+    pattern: /^(\w+) must be a non-empty string$/i,
+    translate: (match) => `El campo "${SETTINGS_FIELD_LABELS[match[1]] ?? match[1]}" no puede estar vacío.`
+  },
+  {
+    pattern: /At least one setting must be provided/i,
+    translate: () => 'No hay cambios que guardar en la configuración.'
   },
   // --- Subida de imágenes ---
   {
