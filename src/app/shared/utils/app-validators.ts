@@ -73,8 +73,8 @@ export class AppValidators {
 
   /**
    * Validador de separadores de Odoo: al importar las variantes, Odoo parte "Atributo:Valor, …"
-   * en cada "," y cada par en el primer ":". Los valores no admiten ","; el nombre del
-   * atributo tampoco admite ":". Error: { odooSeparators: { found } }.
+   * en cada "," y cada par en el primer ":". El cliente prohíbe ambos en el nombre del atributo
+   * y en sus valores (la API solo exige "," en los valores). Error: { odooSeparators: { found } }.
    *
    *   name: ['', [Validators.required, AppValidators.noOdooSeparators([',', ':'])]]
    */

@@ -76,7 +76,7 @@ Imágenes de producto y variante: se suben primero a `uploads` y el formulario e
   - El `.zip` trae `1-Product Attribute`, `2-Point of Sale Category`, `3-Products` y `4-Existencias` (`-NN` por parte), que se importan en ese orden.
   - Exportar **no** cambia el estado. Tras importar sin errores, el usuario marca los productos: la exportación total con `sync-exported` (aviso en el listado) y un producto con `sync`. `sync-exported` omite (`skippedIds`) los que cambiaron después de exportar.
   - `ProductVariant.syncedAt` marca las variantes que ya están en Odoo. Sus existencias solo se exportan una vez (variantes sin `syncedAt` y con cantidad > 0); después el stock se ajusta en Odoo. Un producto `synced` con variantes nuevas se puede volver a exportar y a marcar.
-  - Odoo usa `,` y `:` como separadores: el nombre del atributo no admite ninguno y `valueName`/`shortName` no admiten `,` (validado en el formulario y en la API).
+  - Odoo usa `,` y `:` como separadores: el formulario no los admite en el nombre del atributo ni en `valueName`/`shortName`. La API rechaza ambos en el nombre, pero en los valores solo rechaza `,`.
   - Dos productos con el mismo nombre no se pueden exportar (Odoo asigna las variantes por nombre).
   - `externalIdPrefix` no se puede cambiar si hay algún producto `synced` (activo o no): la pantalla de configuración deshabilita el campo.
 

@@ -135,8 +135,8 @@ export class AttributeFormComponent implements OnInit {
     return this.fb.group({
       id: [value?.id ?? null],
       hasStoredColor: [!!value?.colorHex],
-      valueName: [value?.valueName ?? '', [Validators.required, AppValidators.noOdooSeparators()]],
-      shortName: [value?.shortName ?? '', [Validators.required, Validators.maxLength(this.SHORT_NAME_MAX), AppValidators.noOdooSeparators()]],
+      valueName: [value?.valueName ?? '', [Validators.required, AppValidators.noOdooSeparators([',', ':'])]],
+      shortName: [value?.shortName ?? '', [Validators.required, Validators.maxLength(this.SHORT_NAME_MAX), AppValidators.noOdooSeparators([',', ':'])]],
       colorHex: [value?.colorHex ?? DEFAULT_COLOR, Validators.required]
     });
   }
@@ -192,7 +192,7 @@ export class AttributeFormComponent implements OnInit {
     return this.duplicateIndexes(field).has(index);
   }
 
-  // Algún valor (guardado, nuevo o de la fila de alta) con una coma en el nombre o en el código SKU
+  // Algún valor (guardado, nuevo o de la fila de alta) con "," o ":" en el nombre o en el código SKU
   hasValueSeparatorError(): boolean {
     return [...this.valuesArray.controls, this.newValueForm].some(group =>
       ['valueName', 'shortName'].some(field => group.get(field)?.hasError('odooSeparators'))
