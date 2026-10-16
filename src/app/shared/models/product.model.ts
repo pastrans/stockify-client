@@ -15,7 +15,8 @@ export interface ProductVariant {
   stockWarehouse: number;
   totalStock: number;
   isLocked: boolean;
-  externalId: string;
+  // Primera vez que la variante se marcó como sincronizada (ya está en Odoo); null = pendiente
+  syncedAt: string | null;
   available: boolean;
   combination: AttributeValue[];
   createdAt?: string;
@@ -44,7 +45,6 @@ export interface Product {
   status: ProductStatus;
   available: boolean;
   isLocked: boolean;
-  externalId: string;
   totalVariantsCount: number;
   posCategoryIds: number[];
   attributeLines: ProductAttributeLine[];
@@ -98,6 +98,21 @@ export const PRODUCT_STATUS_OPTIONS: ProductStatusOption[] = [
     badgeClass: 'bg-info-subtle text-info border border-info-subtle'
   }
 ];
+
+// --- SINCRONIZACIÓN CON ODOO ---
+
+export interface SyncProductsResult {
+  updatedCount: number;
+  syncedIds: number[];
+}
+
+export interface SyncExportedProductsResult extends SyncProductsResult {
+  // Productos de la exportación modificados después de exportarla: hay que volver a exportarlos
+  skippedIds: number[];
+}
+
+// Si el producto vuelve a 'draft' (sin stock), la API añade una advertencia en inglés
+export type UnsyncProductResult = Product & { warning?: string };
 
 // --- PETICIONES ---
 

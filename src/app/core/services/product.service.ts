@@ -8,6 +8,9 @@ import {
   ProductFilters,
   ProductVariant,
   ProductsListResponse,
+  SyncExportedProductsResult,
+  SyncProductsResult,
+  UnsyncProductResult,
   UpdateProductRequest,
   UpdateVariantRequest,
   UpdateVariantStockRequest
@@ -56,6 +59,22 @@ export class ProductService {
 
   deleteProduct(id: number): Observable<Product> {
     return this.http.delete<Product>(`${this.apiUrl}/${id}`);
+  }
+
+  // --- Sincronización con Odoo ---
+
+  // Marca los productos como importados en Odoo (y llena syncedAt en sus variantes activas)
+  syncProducts(productIds: number[]): Observable<SyncProductsResult> {
+    return this.http.patch<SyncProductsResult>(`${this.apiUrl}/sync`, { productIds });
+  }
+
+  // Marca los productos de una exportación que no cambiaron desde exportedAt (X-Export-Generated-At)
+  syncExported(exportedAt: string): Observable<SyncExportedProductsResult> {
+    return this.http.patch<SyncExportedProductsResult>(`${this.apiUrl}/sync-exported`, { exportedAt });
+  }
+
+  unsyncProduct(id: number): Observable<UnsyncProductResult> {
+    return this.http.patch<UnsyncProductResult>(`${this.apiUrl}/${id}/unsync`, null);
   }
 
   // --- Variantes y existencias ---

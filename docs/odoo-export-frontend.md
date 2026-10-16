@@ -111,13 +111,13 @@ Odoo usa esos caracteres como separadores al importar las variantes. Conviene va
 
 **Como** desarrollador, **quiero** los modelos y servicios del frontend alineados con la API, **para** construir las pantallas de exportación.
 
-- [ ] `shared/models/product.model.ts`: quitar `externalId` (producto y variante) y agregar `syncedAt: string | null` a la variante.
-- [ ] `shared/models/export-settings.model.ts`: `ExportSettings`, `ExportLanguage` (`'en' | 'es'`) y `UpdateExportSettings` (parcial).
-- [ ] `core/services/settings.service.ts`: `getExportSettings()` y `updateExportSettings(data)`.
-- [ ] `core/services/export.service.ts`: `exportFull()` y `exportProduct(id)`. Ambos devuelven `{ blob, fileName, generatedAt }`, leyendo las cabeceras `Content-Disposition` y `X-Export-Generated-At`.
-- [ ] Utilidad para descargar un `Blob` con su nombre (`URL.createObjectURL` + `<a download>`).
-- [ ] `product.service.ts`: `syncProducts(ids)`, `syncExported(exportedAt)` y `unsyncProduct(id)` con sus tipos de respuesta (`SyncProductsResult`, `SyncExportedProductsResult`, producto con `warning?`).
-- [ ] Manejo de errores con `responseType: 'blob'` (leer el `Blob` como JSON) para que `getApiErrorMessage` funcione con las exportaciones.
+- [x] `shared/models/product.model.ts`: quitar `externalId` (producto y variante) y agregar `syncedAt: string | null` a la variante.
+- [x] `shared/models/export-settings.model.ts`: `ExportSettings`, `ExportLanguage` (`'en' | 'es'`) y `UpdateExportSettings` (parcial).
+- [x] `core/services/settings.service.ts`: `getExportSettings()` y `updateExportSettings(data)`.
+- [x] `core/services/export.service.ts`: `exportFull()` y `exportProduct(id)`. Ambos devuelven `{ blob, fileName, generatedAt }`, leyendo las cabeceras `Content-Disposition` y `X-Export-Generated-At`.
+- [x] Utilidad para descargar un `Blob` con su nombre (`URL.createObjectURL` + `<a download>`).
+- [x] `product.service.ts`: `syncProducts(ids)`, `syncExported(exportedAt)` y `unsyncProduct(id)` con sus tipos de respuesta (`SyncProductsResult`, `SyncExportedProductsResult`, producto con `warning?`).
+- [x] Manejo de errores con `responseType: 'blob'` (leer el `Blob` como JSON) para que `getApiErrorMessage` funcione con las exportaciones.
 
 **Hecho cuando:** compila, ninguna pantalla usa `externalId` y los servicios responden contra la API local.
 
