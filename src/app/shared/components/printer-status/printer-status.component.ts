@@ -1,24 +1,47 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
 import { LABEL_TOP_RANGE, PrinterError, ZebraDevice, ZebraPrinterService } from '../../../core/services/zebra-printer.service';
-import { PrinterStatus, dotsPerMm, sanitizeZplValue } from '../../utils/zpl';
+import { LabelaryService } from '../../../core/services/labelary.service';
+import { PrinterStatus, dotsPerMm, sanitizeZplValue, setQuantity } from '../../utils/zpl';
+
+// Etiqueta real con la que probar la impresora (la plantilla elegida con una variante)
+export interface PrinterTestLabel {
+  // Solo la etiqueta (sin bloques de configuración), con los marcadores ya sustituidos
+  zpl: string;
+  // Vista previa de Labelary: así debe salir impresa
+  previewUrl: string | null;
+  widthMm: number;
+  description: string;
+}
+
+// Tamaño con el que se dibuja la vista previa de la etiqueta genérica
+const GENERIC_PREVIEW_SIZE_MM = { width: 40, height: 30 };
 
 /**
  * Impresora Zebra elegida, selector y botón "Verificar impresora" (US-L4).
  * La elección se guarda en el navegador; el flujo de impresión vuelve a verificar antes de imprimir.
+ * Con [testLabel], la prueba imprime esa etiqueta real y el ajuste de posición la muestra como
+ * referencia ("así debe salir"); sin ella, se usa una etiqueta genérica que se explica sola.
  *
- *   <app-printer-status></app-printer-status>
+ *   <app-printer-status [testLabel]="testLabel()"></app-printer-status>
  */
 @Component({
   selector: 'app-printer-status',
   standalone: true,
   imports: [FormsModule],
   templateUrl: './printer-status.component.html',
-  styles: ['.position-input { width: 130px; }']
+  styles: [
+    '.position-input { width: 130px; }',
+    '.expected-image { max-width: 220px; height: auto; background: #fff; box-shadow: 0 0 0 1px rgba(255,255,255,.15); image-rendering: pixelated; }',
+    '.expected-empty { width: 160px; height: 120px; border: 1px dashed rgba(255,255,255,.2); border-radius: .375rem; }'
+  ]
 })
-export class PrinterStatusComponent implements OnInit {
+export class PrinterStatusComponent implements OnInit, OnDestroy {
   private readonly zebra = inject(ZebraPrinterService);
+  private readonly labelary = inject(LabelaryService);
+
+  testLabel = input<PrinterTestLabel | null>(null);
 
   readonly selectedUid = this.zebra.selectedUid;
 
@@ -47,8 +70,21 @@ export class PrinterStatusComponent implements OnInit {
     max: LABEL_TOP_RANGE.max / this.dotsPerMm
   };
 
+  // Referencia de cómo debe salir la prueba: la etiqueta real o, sin ella, la genérica
+  private genericPreviewUrl = signal<string | null>(null);
+  expected = computed(() => {
+    const real = this.testLabel();
+    if (real) return { url: real.previewUrl, widthPx: real.widthMm * 4, description: real.description };
+    return { url: this.genericPreviewUrl(), widthPx: GENERIC_PREVIEW_SIZE_MM.width * 4, description: 'Etiqueta de prueba genérica' };
+  });
+
   ngOnInit(): void {
     this.loadPrinters();
+  }
+
+  ngOnDestroy(): void {
+    const url = this.genericPreviewUrl();
+    if (url) URL.revokeObjectURL(url);
   }
 
   async loadPrinters(): Promise<void> {
@@ -127,6 +163,7 @@ export class PrinterStatusComponent implements OnInit {
   async togglePosition(): Promise<void> {
     this.showPosition.update(open => !open);
     if (!this.showPosition()) return;
+    if (!this.testLabel() && !this.genericPreviewUrl()) this.loadGenericPreview();
 
     this.isReadingPosition.set(true);
     this.checkError.set(null);
@@ -200,15 +237,35 @@ export class PrinterStatusComponent implements OnInit {
     }
   }
 
-  // La línea superior va a 1 mm del borde: si no se ve entera, la impresión está corrida
+  // La etiqueta real (una copia) o, sin ella, la genérica
   private async sendTestLabel(device: ZebraDevice): Promise<void> {
+    const real = this.testLabel();
+    await this.zebra.send(real ? setQuantity(real.zpl, 1) : this.genericTestZpl(device.name), device);
+  }
+
+  /**
+   * Etiqueta genérica que se explica sola: una línea a 1 mm del borde superior con la indicación
+   * impresa al lado. Si la línea no sale entera, la impresión está corrida hacia arriba.
+   */
+  private genericTestZpl(printerName: string): string {
     const time = new Date().toLocaleString('es');
-    const name = sanitizeZplValue(device.name);
+    const name = sanitizeZplValue(printerName);
     const top = this.dotsPerMm;
-    await this.zebra.send(
-      `^XA^CI28^FO16,${top}^GB288,3,3^FS^FO16,${top + 12}^A0N,28,28^FDStockify: prueba^FS` +
-      `^FO16,${top + 48}^A0N,22,22^FD${name}^FS^FO16,${top + 76}^A0N,22,22^FD${time}^FS^PQ1^XZ`,
-      device
-    );
+    return `^XA^CI28^FO16,${top}^GB288,3,3^FS` +
+      `^FO16,${top + 10}^A0N,20,18^FDDebe verse la línea de arriba entera^FS` +
+      `^FO16,${top + 36}^A0N,28,28^FDStockify: prueba^FS` +
+      `^FO16,${top + 72}^A0N,20,20^FD${name}^FS` +
+      `^FO16,${top + 98}^A0N,20,20^FD${time}^FS^PQ1^XZ`;
+  }
+
+  private async loadGenericPreview(): Promise<void> {
+    try {
+      const url = await this.labelary.preview(
+        this.genericTestZpl('Zebra'), GENERIC_PREVIEW_SIZE_MM.width, GENERIC_PREVIEW_SIZE_MM.height, 203
+      );
+      this.genericPreviewUrl.set(url);
+    } catch {
+      // Sin vista previa: el texto de la etiqueta ya explica qué revisar
+    }
   }
 }

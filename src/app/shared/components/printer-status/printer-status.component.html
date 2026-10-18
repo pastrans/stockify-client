@@ -37,7 +37,7 @@
       <button
         type="button"
         class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
-        title="Imprime una etiqueta con el nombre de la impresora y la hora"
+        [title]="testLabel() ? 'Imprime una etiqueta de la plantilla elegida' : 'Imprime una etiqueta genérica con el nombre de la impresora y la hora'"
         [disabled]="isPrintingTest() || isChecking()"
         (click)="printTest()"
       >
@@ -81,6 +81,28 @@
           Si después de calibrar la impresión sigue corrida (p. ej. no se ve la primera línea), muévela aquí.
           Un valor positivo la baja y uno negativo la sube. Se guarda en la impresora y vale para todas las plantillas.
         </p>
+
+        <!-- Referencia para comparar con la etiqueta impresa -->
+        <div class="d-flex flex-column flex-sm-row gap-3 align-items-sm-start mb-3">
+          <div class="text-center flex-shrink-0">
+            <div class="fw-semibold mb-1">Así debe salir</div>
+            @if (expected().url; as url) {
+              <img [src]="url" alt="Cómo debe salir la etiqueta de prueba" class="expected-image" [style.width.px]="expected().widthPx">
+            } @else {
+              <div class="expected-empty text-secondary d-flex align-items-center justify-content-center">Sin vista previa</div>
+            }
+            <div class="form-text mt-1">{{ expected().description }}</div>
+          </div>
+          <ol class="ps-3 mb-0">
+            <li class="mb-1">Pulsa <strong>Guardar y probar</strong>: se imprime {{ testLabel() ? 'esta misma etiqueta' : 'la etiqueta de prueba' }}.</li>
+            <li class="mb-1">
+              Compárala con la imagen: el contenido debe quedar <strong>a la misma distancia del borde superior</strong>
+              {{ testLabel() ? '(fíjate en el nombre y en el QR)' : '(la línea de arriba debe verse entera)' }}.
+            </li>
+            <li class="mb-1">Si sale <strong>más arriba</strong> o se corta, aumenta el margen; si sale <strong>más abajo</strong>, redúcelo.</li>
+            <li>Ajusta de 0.5 en 0.5 mm hasta que coincida.</li>
+          </ol>
+        </div>
         @if (isReadingPosition()) {
           <div class="text-secondary"><span class="spinner-border spinner-border-sm me-2" role="status"></span>Leyendo la configuración...</div>
         } @else {

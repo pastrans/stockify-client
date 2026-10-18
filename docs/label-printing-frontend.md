@@ -195,6 +195,8 @@ Un 400 de plantilla puede juntar varios problemas de marcadores separados por `;
 - [x] Componente compartido `app-printer-status`: impresora elegida, selector, botón "Verificar impresora" y estado. Si falla, la lista de comprobaciones (luz verde fija, cable USB, Browser Print abierto) y el enlace a la guía.
 - [x] Mensaje claro si Browser Print no está instalado o no responde (incluido el caso HTTPS, §9 de los requerimientos).
 
+- [x] *Añadido tras la prueba con la impresora (2026-10-18):* **Calibrar** (`~JC`) y **Posición**: lee el margen superior guardado (`^HH`) y lo guarda (`^LT` + `^JUS`), para corregir la impresión corrida en vertical. Con la GK420d y el rollo de 40 × 30 hizo falta +4 mm. La prueba imprime la etiqueta real de la plantilla elegida y muestra su vista previa como referencia ("Así debe salir"); sin plantilla, una etiqueta genérica que se explica sola.
+
 **Hecho cuando:** con la Zebra conectada, se elige, se verifica y se imprime una etiqueta de prueba fija; sin Browser Print, el mensaje explica qué falta.
 
 ## US-L5 · Pestaña "Etiquetas" del producto

@@ -14,7 +14,7 @@ import { LabelaryService } from '../../../../core/services/labelary.service';
 import { LabelQueueService } from '../../../../core/services/label-queue.service';
 import { LabelPrintFlowService, labelContextFrom } from '../../../labels/label-print-flow.service';
 import { SearchSelectComponent } from '../../../../shared/components/search-select/search-select.component';
-import { PrinterStatusComponent } from '../../../../shared/components/printer-status/printer-status.component';
+import { PrinterStatusComponent, PrinterTestLabel } from '../../../../shared/components/printer-status/printer-status.component';
 import { getApiErrorMessage } from '../../../../shared/utils/api-error';
 import { LabelPrintItem, renderLabel, sizeOf, splitTemplate, totalLabels } from '../../../../shared/utils/zpl';
 
@@ -85,6 +85,19 @@ export class ProductLabelsComponent implements OnInit, OnDestroy {
   total = computed(() => totalLabels(this.items()));
   // La vista previa muestra la primera variante con cantidad > 0, o la primera si no hay ninguna
   previewItem = computed(() => this.items().find(item => item.quantity > 0) ?? this.items()[0] ?? null);
+
+  // La prueba de la impresora usa la misma etiqueta que la vista previa
+  printerTestLabel = computed<PrinterTestLabel | null>(() => {
+    const template = this.selectedTemplate();
+    const item = this.previewItem();
+    if (!template || !item) return null;
+    return {
+      zpl: renderLabel(splitTemplate(template.zpl).label, item.product, item.variant, labelContextFrom(this.settings())),
+      previewUrl: this.previewUrl(),
+      widthMm: template.widthMm,
+      description: `"${template.name}" con ${item.variant.sku}`
+    };
+  });
 
   constructor() {
     // Producto recargado (p. ej. tras guardar): se conservan las cantidades de las variantes que siguen
