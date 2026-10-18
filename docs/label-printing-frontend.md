@@ -221,12 +221,14 @@ Un 400 de plantilla puede juntar varios problemas de marcadores separados por `;
 
 **Como** usuario, **quiero** juntar etiquetas de varios productos e imprimirlas de una vez, **para** reponer etiquetas sin ir producto por producto.
 
-- [ ] `core/services/label-queue.service.ts`: signal con `{ variantId, productId, quantity }[]` y respaldo en `localStorage` (envuelto en `try/catch`); agregar suma cantidades.
-- [ ] Ruta `/labels/queue`: carga los productos de la cola (`GET /products/:id`) y muestra producto, SKU, combinación, talla y cantidad editable.
-- [ ] Badge "No sincronizado" por fila; las variantes que ya no existen o están inactivas se marcan y no se imprimen (RF-29).
-- [ ] Aplicar a todas, quitar filas, vaciar la cola (con confirmación).
-- [ ] Selector de plantilla, vista previa, **Imprimir** (flujo común de US-L5) y **Descargar .zpl**.
-- [ ] Indicador en el menú con el número de etiquetas en la cola.
+- [x] `core/services/label-queue.service.ts`: signal con `{ variantId, productId, quantity }[]` y respaldo en `localStorage` (envuelto en `try/catch`); agregar suma cantidades.
+- [x] Ruta `/labels/queue`: carga los productos de la cola (`GET /products/:id`) y muestra producto, SKU, combinación, talla y cantidad editable.
+- [x] Badge "No sincronizado" por fila; las variantes que ya no existen o están inactivas se marcan y no se imprimen (RF-29).
+- [x] Aplicar a todas, quitar filas, vaciar la cola (con confirmación).
+- [x] Selector de plantilla, vista previa, **Imprimir** (flujo común de US-L5) y **Descargar .zpl**.
+- [x] Indicador en el menú con el número de etiquetas en la cola.
+
+- [x] *Además:* el panel de impresión (impresora, plantilla, vista previa, Imprimir y Descargar) es un componente común con la pestaña del producto (`features/labels/label-job-panel`). Tras imprimir, la cola ofrece quitar lo impreso; las filas no disponibles se pueden quitar de una vez.
 
 **Hecho cuando:** se agregan variantes de varios productos, la cola sobrevive a recargas y se imprime con el mismo flujo de prueba.
 

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { IsActiveMatchOptions, Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { LabelQueueService } from '../../../core/services/label-queue.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -15,6 +16,9 @@ export class MainLayoutComponent {
   private readonly authService = inject(AuthService);
   readonly router = inject(Router);
   isMenuCollapsed = true;
+
+  // Etiquetas pendientes en la cola de impresión (indicador del menú)
+  readonly queuedLabels = inject(LabelQueueService).totalLabels;
 
   // /settings sin parámetros es la pestaña de exportación; con ?tab=labels, la de etiquetas
   readonly exactQueryParams: IsActiveMatchOptions = {

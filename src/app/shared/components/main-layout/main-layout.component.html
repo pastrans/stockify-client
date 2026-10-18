@@ -41,7 +41,7 @@
               <i class="bi bi-people me-2"></i> Usuarios
             </a>
           </li>
-          <!-- Etiquetas: plantillas y configuración (luego la cola de impresión y las guías) -->
+          <!-- Etiquetas: cola de impresión, plantillas y configuración (luego las guías) -->
           <li class="nav-item" ngbDropdown routerLinkActive #labelsMenu="routerLinkActive">
             <button
               type="button"
@@ -50,8 +50,17 @@
               ngbDropdownToggle
             >
               <i class="bi bi-upc-scan me-2"></i> Etiquetas
+              @if (queuedLabels() > 0) {
+                <span class="badge rounded-pill bg-info text-dark ms-2" [title]="queuedLabels() + ' etiquetas en la cola'">{{ queuedLabels() }}</span>
+              }
             </button>
             <div ngbDropdownMenu>
+              <a ngbDropdownItem routerLink="/labels/queue" routerLinkActive="active" class="d-flex align-items-center" (click)="isMenuCollapsed = true">
+                <i class="bi bi-inbox me-2"></i> Cola de impresión
+                @if (queuedLabels() > 0) {
+                  <span class="badge rounded-pill bg-info text-dark ms-auto ps-2">{{ queuedLabels() }}</span>
+                }
+              </a>
               <a ngbDropdownItem routerLink="/labels/templates" routerLinkActive="active" (click)="isMenuCollapsed = true">
                 <i class="bi bi-file-earmark-code me-2"></i> Plantillas
               </a>

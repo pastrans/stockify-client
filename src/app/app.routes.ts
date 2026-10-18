@@ -77,6 +77,10 @@ export const routes: Routes = [
         path: 'labels',
         children: [
           {
+            path: 'queue',
+            loadComponent: () => import('./features/labels/label-queue/label-queue.component').then(m => m.LabelQueueComponent)
+          },
+          {
             path: 'templates',
             loadComponent: () => import('./features/labels/label-templates/label-templates.component').then(m => m.LabelTemplatesComponent)
           },
