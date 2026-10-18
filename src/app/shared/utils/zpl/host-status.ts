@@ -77,3 +77,23 @@ export function parseHostStatus(raw: string): PrinterStatus | null {
     warnings
   };
 }
+
+/**
+ * Hoja de configuración devuelta por ^HH: líneas "valor   NOMBRE", p. ej. "+000   LABEL TOP".
+ * Devuelve un mapa NOMBRE → valor (en mayúsculas, tal como la imprime la Zebra).
+ */
+export function parsePrinterConfig(raw: string): Record<string, string> {
+  const config: Record<string, string> = {};
+  for (const line of raw.replace(/[\x02\x03]/g, '').split(/\r?\n/)) {
+    const match = line.trim().match(/^(\S+(?:\s\S+)*?)\s{2,}([A-Z][A-Z0-9 .]*[A-Z0-9.])\s*(?:<-)?$/);
+    if (match) config[match[2].trim()] = match[1].trim();
+  }
+  return config;
+}
+
+// Margen superior (^LT) en puntos, a partir de la hoja de configuración; null si no aparece
+export function labelTopFromConfig(config: Record<string, string>): number | null {
+  const value = config['LABEL TOP'];
+  if (value === undefined || !/^[+-]?\d+$/.test(value)) return null;
+  return Number(value);
+}

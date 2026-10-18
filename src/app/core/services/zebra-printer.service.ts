@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { PrinterStatus, parseHostStatus } from '../../shared/utils/zpl';
+import { PrinterStatus, labelTopFromConfig, parseHostStatus, parsePrinterConfig } from '../../shared/utils/zpl';
 
 // Impresora tal como la describe Zebra Browser Print
 export interface ZebraDevice {
@@ -20,6 +20,10 @@ const STATUS_READ_ATTEMPTS = 6;
 const STATUS_READ_DELAY_MS = 250;
 // Un trabajo grande puede tardar en transferirse por USB
 const SEND_TIMEOUT_MS = 30000;
+// La hoja de configuración (^HH) es más larga y llega en varias lecturas
+const CONFIG_READ_ATTEMPTS = 12;
+// Rango de ^LT que admite el firmware de la GK420d
+export const LABEL_TOP_RANGE = { min: -120, max: 120 };
 
 export class PrinterError extends Error {}
 
@@ -104,6 +108,32 @@ export class ZebraPrinterService {
     throw new PrinterError(
       `La impresora "${printer.name}" no respondió. Revisa que esté encendida, con la luz verde fija y el cable USB conectado.`
     );
+  }
+
+  // --- POSICIÓN DE IMPRESIÓN ---
+
+  // Margen superior guardado en la impresora (^LT), en puntos; null si no se pudo leer
+  async readLabelTop(device?: ZebraDevice): Promise<number | null> {
+    const printer = device ?? await this.resolvePrinter();
+    await this.readRaw(printer).catch(() => '');
+    await this.write(printer, '^XA^HH^XZ', CONNECTION_TIMEOUT_MS);
+
+    let response = '';
+    for (let attempt = 0; attempt < CONFIG_READ_ATTEMPTS; attempt++) {
+      await wait(STATUS_READ_DELAY_MS);
+      response += await this.readRaw(printer);
+      if (/FIRMWARE/i.test(response)) break;
+    }
+    return labelTopFromConfig(parsePrinterConfig(response));
+  }
+
+  /**
+   * Guarda el margen superior en la impresora (^LT + ^JUS). Corrige que la impresión salga corrida
+   * en vertical aunque el rollo esté calibrado; vale para todas las plantillas. Positivo = más abajo.
+   */
+  async saveLabelTop(dots: number, device?: ZebraDevice): Promise<void> {
+    const value = Math.max(LABEL_TOP_RANGE.min, Math.min(LABEL_TOP_RANGE.max, Math.round(dots)));
+    await this.send(`^XA^LT${value}^JUS^XZ`, device);
   }
 
   // --- IMPRESIÓN ---

@@ -62,7 +62,70 @@
         }
         Calibrar
       </button>
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
+        title="Corrige que la impresión salga corrida hacia arriba o hacia abajo"
+        [class.active]="showPosition()"
+        (click)="togglePosition()"
+      >
+        <i class="bi bi-arrows-vertical"></i> Posición
+      </button>
     </div>
+
+    <!-- Margen superior (^LT): se guarda en la impresora y vale para todas las plantillas -->
+    @if (showPosition()) {
+      <div class="border border-secondary rounded p-3 mt-3 small">
+        <div class="fw-semibold mb-1"><i class="bi bi-arrows-vertical me-1"></i>Margen superior</div>
+        <p class="text-secondary mb-2">
+          Si después de calibrar la impresión sigue corrida (p. ej. no se ve la primera línea), muévela aquí.
+          Un valor positivo la baja y uno negativo la sube. Se guarda en la impresora y vale para todas las plantillas.
+        </p>
+        @if (isReadingPosition()) {
+          <div class="text-secondary"><span class="spinner-border spinner-border-sm me-2" role="status"></span>Leyendo la configuración...</div>
+        } @else {
+          <div class="mb-2">
+            Valor actual:
+            @if (currentLabelTopDots(); as dots) {
+              <strong>{{ dots / dotsPerMm }} mm</strong> ({{ dots }} puntos)
+            } @else if (currentLabelTopDots() === 0) {
+              <strong>0 mm</strong> (0 puntos)
+            } @else {
+              <span class="text-warning">no se pudo leer</span>
+            }
+          </div>
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <div class="input-group input-group-sm position-input">
+              <input
+                type="number"
+                class="form-control text-center"
+                step="0.5"
+                [min]="labelTopRangeMm.min"
+                [max]="labelTopRangeMm.max"
+                [(ngModel)]="labelTopMm"
+                aria-label="Margen superior en mm"
+              >
+              <span class="input-group-text">mm</span>
+            </div>
+            <span class="text-secondary">= {{ mmToDots(labelTopMm) }} puntos</span>
+            <button
+              type="button"
+              class="btn btn-sm btn-primary d-flex align-items-center gap-1"
+              [disabled]="isSavingPosition() || !isPositionInRange()"
+              (click)="savePosition()"
+            >
+              @if (isSavingPosition()) {
+                <span class="spinner-border spinner-border-sm" role="status"></span>
+              }
+              Guardar y probar
+            </button>
+          </div>
+          <div class="form-text">
+            Entre {{ labelTopRangeMm.min }} y {{ labelTopRangeMm.max }} mm. En la etiqueta de prueba, la línea superior debe quedar entera, 1 mm por debajo del borde.
+          </div>
+        }
+      </div>
+    }
 
     <!-- Browser Print no responde -->
     @if (connectionError(); as error) {
