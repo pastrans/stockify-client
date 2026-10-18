@@ -48,6 +48,20 @@
         }
         Imprimir prueba
       </button>
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
+        title="Mide el rollo: úsalo al cambiar de rollo o si la impresión sale corrida"
+        [disabled]="isCalibrating() || isChecking()"
+        (click)="calibrate()"
+      >
+        @if (isCalibrating()) {
+          <span class="spinner-border spinner-border-sm" role="status"></span>
+        } @else {
+          <i class="bi bi-rulers"></i>
+        }
+        Calibrar
+      </button>
     </div>
 
     <!-- Browser Print no responde -->

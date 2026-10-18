@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import Swal from 'sweetalert2';
 import { PrinterError, ZebraDevice, ZebraPrinterService } from '../../../core/services/zebra-printer.service';
 import { PrinterStatus, sanitizeZplValue } from '../../utils/zpl';
 
@@ -30,6 +31,7 @@ export class PrinterStatusComponent implements OnInit {
   checked = signal<{ device: ZebraDevice; status: PrinterStatus } | null>(null);
   checkError = signal<string | null>(null);
   isPrintingTest = signal<boolean>(false);
+  isCalibrating = signal<boolean>(false);
 
   ngOnInit(): void {
     this.loadPrinters();
@@ -67,6 +69,44 @@ export class PrinterStatusComponent implements OnInit {
       this.checkError.set(error instanceof PrinterError ? error.message : 'No se pudo verificar la impresora.');
     } finally {
       this.isChecking.set(false);
+    }
+  }
+
+  /**
+   * Calibración del rollo con ~JC: la impresora avanza algunas etiquetas y mide dónde empieza cada una.
+   * Hace falta al cambiar de rollo o de tamaño de etiqueta; sin ella, la impresión sale corrida
+   * (p. ej. el nombre cae en el espacio entre etiquetas).
+   */
+  async calibrate(): Promise<void> {
+    const confirm = await Swal.fire({
+      theme: 'dark',
+      icon: 'question',
+      title: '¿Calibrar la impresora?',
+      text: 'La impresora avanzará algunas etiquetas en blanco para medir el rollo. Hazlo cada vez que cambies de rollo o de tamaño de etiqueta.',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, calibrar',
+      cancelButtonText: 'Cancelar'
+    });
+    if (!confirm.isConfirmed) return;
+
+    this.isCalibrating.set(true);
+    this.checkError.set(null);
+    try {
+      const { device, status } = await this.zebra.checkStatus();
+      this.checked.set({ device, status });
+      if (!status.ready) return;
+      await this.zebra.send('~JC', device);
+      await Swal.fire({
+        theme: 'dark',
+        icon: 'success',
+        title: 'Calibración enviada',
+        text: 'Cuando la impresora deje de avanzar etiquetas, pulsa "Imprimir prueba" para comprobar que el texto sale centrado en la etiqueta.',
+        confirmButtonText: 'Entendido'
+      });
+    } catch (error) {
+      this.checkError.set(error instanceof PrinterError ? error.message : 'No se pudo calibrar la impresora.');
+    } finally {
+      this.isCalibrating.set(false);
     }
   }
 
