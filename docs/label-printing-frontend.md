@@ -178,7 +178,7 @@ Un 400 de plantilla puede juntar varios problemas de marcadores separados por `;
 - [x] Vista previa con **Labelary** (§7 de los requerimientos): con datos de ejemplo o de una variante elegida, bajo demanda o al dejar de escribir; si falla, aviso sin bloquear.
 - [x] Advertencias en vivo (`templateWarnings`): sin `^CI28`, con `^JUS`, `^PW`/`^LL` distinto del tamaño.
 - [x] Eliminar (soft-delete) y reactivar, con confirmación.
-- [x] Entrada en el menú nuevo **"Etiquetas"** (desplegable del `main-layout`): Cola de impresión, Plantillas y Guías. *Por ahora solo Plantillas; la cola y las guías se agregan en US-L6 y US-L7.*
+- [x] Entrada en el menú nuevo **"Etiquetas"** (desplegable del `main-layout`): Cola de impresión, Plantillas y Guías. *Por ahora Plantillas y **Configuración** (`/settings?tab=labels`, añadida el 2026-10-18 para no tener que pasar por el menú Odoo); la cola y las guías se agregan en US-L6 y US-L7.*
 
 **Hecho cuando:** se pueden crear, editar, previsualizar y retirar plantillas, y los errores de marcadores se ven en español.
 

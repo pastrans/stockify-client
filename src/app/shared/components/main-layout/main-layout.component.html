@@ -41,7 +41,7 @@
               <i class="bi bi-people me-2"></i> Usuarios
             </a>
           </li>
-          <!-- Etiquetas: plantillas (luego la cola de impresión y las guías) -->
+          <!-- Etiquetas: plantillas y configuración (luego la cola de impresión y las guías) -->
           <li class="nav-item" ngbDropdown routerLinkActive #labelsMenu="routerLinkActive">
             <button
               type="button"
@@ -55,10 +55,20 @@
               <a ngbDropdownItem routerLink="/labels/templates" routerLinkActive="active" (click)="isMenuCollapsed = true">
                 <i class="bi bi-file-earmark-code me-2"></i> Plantillas
               </a>
+              <a
+                ngbDropdownItem
+                routerLink="/settings"
+                [queryParams]="{ tab: 'labels' }"
+                routerLinkActive="active"
+                (click)="isMenuCollapsed = true"
+              >
+                <i class="bi bi-sliders me-2"></i> Configuración
+              </a>
             </div>
           </li>
-          <!-- Exportación a Odoo: el toggle se marca activo si lo está alguna de sus entradas -->
-          <li class="nav-item" ngbDropdown routerLinkActive #odooMenu="routerLinkActive">
+          <!-- Exportación a Odoo: el toggle se marca activo si lo está alguna de sus entradas.
+               Con queryParams exactos, /settings?tab=labels activa "Etiquetas" y no este menú -->
+          <li class="nav-item" ngbDropdown routerLinkActive #odooMenu="routerLinkActive" [routerLinkActiveOptions]="exactQueryParams">
             <button
               type="button"
               class="nav-link px-3 d-flex align-items-center"
@@ -68,7 +78,7 @@
               <i class="bi bi-cloud-arrow-up me-2"></i> Odoo
             </button>
             <div ngbDropdownMenu>
-              <a ngbDropdownItem routerLink="/settings" routerLinkActive="active" (click)="isMenuCollapsed = true">
+              <a ngbDropdownItem routerLink="/settings" routerLinkActive="active" [routerLinkActiveOptions]="exactQueryParams" (click)="isMenuCollapsed = true">
                 <i class="bi bi-gear me-2"></i> Configuración de exportación
               </a>
               <a ngbDropdownItem routerLink="/odoo-guide" routerLinkActive="active" (click)="isMenuCollapsed = true">

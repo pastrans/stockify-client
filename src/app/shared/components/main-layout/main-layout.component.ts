@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { Router,  RouterOutlet, RouterLink, RouterLinkActive} from '@angular/router';
+import { IsActiveMatchOptions, Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -15,6 +15,14 @@ export class MainLayoutComponent {
   private readonly authService = inject(AuthService);
   readonly router = inject(Router);
   isMenuCollapsed = true;
+
+  // /settings sin parámetros es la pestaña de exportación; con ?tab=labels, la de etiquetas
+  readonly exactQueryParams: IsActiveMatchOptions = {
+    paths: 'subset',
+    queryParams: 'exact',
+    fragment: 'ignored',
+    matrixParams: 'ignored'
+  };
 
   logout(): void {
     this.authService.logout();
