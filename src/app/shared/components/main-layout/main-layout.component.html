@@ -41,6 +41,22 @@
               <i class="bi bi-people me-2"></i> Usuarios
             </a>
           </li>
+          <!-- Etiquetas: plantillas (luego la cola de impresión y las guías) -->
+          <li class="nav-item" ngbDropdown routerLinkActive #labelsMenu="routerLinkActive">
+            <button
+              type="button"
+              class="nav-link px-3 d-flex align-items-center"
+              [class.active]="labelsMenu.isActive"
+              ngbDropdownToggle
+            >
+              <i class="bi bi-upc-scan me-2"></i> Etiquetas
+            </button>
+            <div ngbDropdownMenu>
+              <a ngbDropdownItem routerLink="/labels/templates" routerLinkActive="active" (click)="isMenuCollapsed = true">
+                <i class="bi bi-file-earmark-code me-2"></i> Plantillas
+              </a>
+            </div>
+          </li>
           <!-- Exportación a Odoo: el toggle se marca activo si lo está alguna de sus entradas -->
           <li class="nav-item" ngbDropdown routerLinkActive #odooMenu="routerLinkActive">
             <button

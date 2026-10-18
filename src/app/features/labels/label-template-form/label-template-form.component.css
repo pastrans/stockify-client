@@ -1,0 +1,31 @@
+.zpl-editor {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.placeholder-btn code {
+  font-size: 0.8rem;
+}
+
+/* En pantallas grandes la vista previa acompaña al editor al hacer scroll */
+@media (min-width: 992px) {
+  .preview-card {
+    position: sticky;
+    top: 1rem;
+  }
+}
+
+.preview-area {
+  min-height: 220px;
+  background-color: rgba(0, 0, 0, 0.25);
+}
+
+.preview-image {
+  max-width: 100%;
+  height: auto;
+  background-color: #fff;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
+  image-rendering: pixelated;
+}

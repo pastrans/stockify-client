@@ -74,6 +74,28 @@ export const routes: Routes = [
         loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent)
       },
       {
+        path: 'labels',
+        children: [
+          {
+            path: 'templates',
+            loadComponent: () => import('./features/labels/label-templates/label-templates.component').then(m => m.LabelTemplatesComponent)
+          },
+          {
+            path: 'templates/new',
+            loadComponent: () => import('./features/labels/label-template-form/label-template-form.component').then(m => m.LabelTemplateFormComponent)
+          },
+          {
+            path: 'templates/:id/edit',
+            loadComponent: () => import('./features/labels/label-template-form/label-template-form.component').then(m => m.LabelTemplateFormComponent)
+          },
+          {
+            path: '',
+            redirectTo: 'templates',
+            pathMatch: 'full'
+          }
+        ]
+      },
+      {
         path: 'odoo-guide',
         loadComponent: () => import('./features/odoo-guide/odoo-guide.component').then(m => m.OdooGuideComponent)
       },

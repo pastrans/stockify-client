@@ -1,0 +1,17 @@
+.table-responsive {
+  border-radius: 0.375rem;
+}
+
+.template-row {
+  cursor: pointer;
+}
+
+/* Sin el caret por defecto de Bootstrap: solo el engranaje */
+.gear-toggle::after {
+  display: none;
+}
+
+/* El <ul> interno de ngb-pagination trae margin-bottom del reboot y descuadra el total */
+.pagination-footer ::ng-deep .pagination {
+  margin-bottom: 0;
+}

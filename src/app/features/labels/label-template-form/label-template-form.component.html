@@ -1,0 +1,297 @@
+<div class="container-xl mt-4" data-bs-theme="dark">
+  <!-- Volver al listado -->
+  <a routerLink="/labels/templates" class="btn btn-link link-secondary text-decoration-none px-0 mb-3 small">
+    <i class="bi bi-arrow-left me-1"></i> Volver a Plantillas
+  </a>
+
+  @if (isLoading()) {
+    <div class="text-center py-5 text-secondary">
+      <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+      Cargando plantilla...
+    </div>
+  } @else if (notFound()) {
+    <div class="card border-secondary bg-dark-subtle shadow-sm mx-auto text-center p-5" style="max-width: 520px;">
+      <i class="bi bi-search text-warning display-4 mb-3"></i>
+      <h4 class="fw-bold mb-2">La plantilla no existe</h4>
+      <p class="text-secondary small mb-4">La plantilla que intentas editar no existe. Consulta el listado de plantillas.</p>
+      <div>
+        <a routerLink="/labels/templates" class="btn btn-primary px-4">
+          <i class="bi bi-table me-1"></i> Ver plantillas
+        </a>
+      </div>
+    </div>
+  } @else {
+    <!-- Encabezado -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <h2 class="fw-bold mb-0">{{ isEditMode() ? 'Editar Plantilla' : 'Nueva Plantilla' }}</h2>
+        @if (template(); as current) {
+          @if (!current.available) {
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+              <i class="bi bi-dot"></i> Inactiva
+            </span>
+          }
+        }
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        @if (template(); as current) {
+          <button
+            type="button"
+            class="btn"
+            [class.btn-outline-danger]="current.available"
+            [class.btn-outline-success]="!current.available"
+            [disabled]="isSaving()"
+            (click)="toggleAvailability()"
+          >
+            @if (current.available) {
+              <i class="bi bi-trash me-1"></i> Eliminar
+            } @else {
+              <i class="bi bi-arrow-counterclockwise me-1"></i> Habilitar
+            }
+          </button>
+        }
+        <a routerLink="/labels/templates" class="btn btn-outline-secondary">Cancelar</a>
+        <button
+          type="button"
+          class="btn btn-primary px-4 d-flex align-items-center justify-content-center gap-2"
+          [disabled]="!canSave()"
+          (click)="saveTemplate()"
+        >
+          @if (isSaving()) {
+            <span class="spinner-border spinner-border-sm" role="status"></span>
+          }
+          Guardar Plantilla
+        </button>
+      </div>
+    </div>
+
+    <!-- Alerta de Error -->
+    @if (errorMessage()) {
+      <div class="alert alert-danger alert-dismissible fade show small" role="alert">
+        <i class="bi bi-exclamation-octagon me-1"></i> {{ errorMessage() }}
+        <button type="button" class="btn-close" (click)="errorMessage.set(null)" aria-label="Close"></button>
+      </div>
+    }
+
+    <div class="row g-4">
+      <!-- FORMULARIO -->
+      <div class="col-12 col-lg-7" [formGroup]="templateForm">
+        <div class="card shadow-sm border-secondary bg-dark-subtle mb-3">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-12 col-md-6 mb-3">
+                <label for="name" class="form-label small fw-semibold">Nombre</label>
+                <input
+                  type="text"
+                  id="name"
+                  class="form-control"
+                  formControlName="name"
+                  placeholder="Ej. QR 40x30 talla y precio"
+                  maxlength="80"
+                  [class.is-invalid]="isInvalid('name')"
+                >
+                @if (isInvalid('name')) {
+                  <div class="invalid-feedback">El nombre es requerido (máx. 80 caracteres).</div>
+                }
+              </div>
+              <div class="col-6 col-md-3 mb-3">
+                <label for="widthMm" class="form-label small fw-semibold">Ancho (mm)</label>
+                <input
+                  type="number"
+                  id="widthMm"
+                  class="form-control"
+                  formControlName="widthMm"
+                  min="0.01"
+                  max="220"
+                  step="0.5"
+                  [class.is-invalid]="isInvalid('widthMm')"
+                >
+                @if (isInvalid('widthMm')) {
+                  <div class="invalid-feedback">Mayor que 0 y hasta 220, con 2 decimales como máximo.</div>
+                }
+              </div>
+              <div class="col-6 col-md-3 mb-3">
+                <label for="heightMm" class="form-label small fw-semibold">Alto (mm)</label>
+                <input
+                  type="number"
+                  id="heightMm"
+                  class="form-control"
+                  formControlName="heightMm"
+                  min="0.01"
+                  max="220"
+                  step="0.5"
+                  [class.is-invalid]="isInvalid('heightMm')"
+                >
+                @if (isInvalid('heightMm')) {
+                  <div class="invalid-feedback">Mayor que 0 y hasta 220, con 2 decimales como máximo.</div>
+                }
+              </div>
+            </div>
+
+            @if (sizeSuggestion(); as suggested) {
+              <div class="alert alert-info small py-2 d-flex flex-wrap align-items-center gap-2 mb-3" role="status">
+                <i class="bi bi-rulers"></i>
+                <span class="flex-grow-1">
+                  Según <code>^PW</code> y <code>^LL</code>, la etiqueta mide {{ suggested.widthMm }} × {{ suggested.heightMm }} mm
+                  (a {{ dpi() }} dpi).
+                </span>
+                <button type="button" class="btn btn-sm btn-outline-info" (click)="applySizeSuggestion()">Usar ese tamaño</button>
+              </div>
+            }
+
+            <div class="mb-3">
+              <label for="description" class="form-label small fw-semibold">Descripción</label>
+              <input
+                type="text"
+                id="description"
+                class="form-control"
+                formControlName="description"
+                placeholder="Ej. QR con el SKU, talla en recuadro y precio oculto (opcional)"
+                maxlength="200"
+              >
+            </div>
+
+            <div>
+              <label for="zpl" class="form-label small fw-semibold">Código ZPL</label>
+              <textarea
+                #zplInput
+                id="zpl"
+                class="form-control font-monospace zpl-editor"
+                formControlName="zpl"
+                rows="16"
+                spellcheck="false"
+                placeholder="^XA&#10;^CI28&#10;^PW320&#10;^LL240&#10;...&#10;^XZ"
+                [class.is-invalid]="isInvalid('zpl') || zplErrors().length > 0"
+              ></textarea>
+              @if (isInvalid('zpl')) {
+                <div class="invalid-feedback">El código ZPL es requerido.</div>
+              }
+              <div class="form-text">
+                Pega el ZPL de ZebraDesigner o del visor de Labelary y cambia los datos de ejemplo por marcadores.
+              </div>
+            </div>
+
+            <!-- Errores y advertencias -->
+            @for (error of zplErrors(); track error) {
+              <div class="small text-danger mt-2"><i class="bi bi-x-circle me-1"></i>{{ error }}</div>
+            }
+            @for (warning of zplWarnings(); track warning) {
+              <div class="small text-warning mt-2"><i class="bi bi-exclamation-triangle me-1"></i>{{ warning }}</div>
+            }
+          </div>
+        </div>
+
+        <!-- MARCADORES -->
+        <div class="card shadow-sm border-secondary bg-dark-subtle">
+          <div class="card-body">
+            <h6 class="fw-semibold mb-1"><i class="bi bi-braces me-2 text-primary"></i>Marcadores</h6>
+            <p class="small text-secondary mb-3">
+              Pulsa uno para insertarlo donde está el cursor. Para recortar un valor, añade <code ngNonBindable>:N</code>
+              (<code ngNonBindable>{{name:12}}</code> imprime como mucho 12 caracteres).
+            </p>
+            <div class="row g-2">
+              @for (help of placeholderHelp; track help.placeholder) {
+                <div class="col-12 col-md-6">
+                  <button type="button" class="btn btn-sm btn-outline-secondary w-100 text-start placeholder-btn" (click)="insertPlaceholder(help.placeholder)">
+                    <code class="text-info">{{ help.placeholder }}</code>
+                    <span class="d-block small text-secondary">{{ help.description }}</span>
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VISTA PREVIA -->
+      <div class="col-12 col-lg-5">
+        <div class="card shadow-sm border-secondary bg-dark-subtle preview-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="fw-semibold mb-0"><i class="bi bi-eye me-2 text-primary"></i>Vista previa</h6>
+              <button type="button" class="btn btn-sm btn-outline-info" [disabled]="isPreviewing()" (click)="refreshPreview()">
+                @if (isPreviewing()) {
+                  <span class="spinner-border spinner-border-sm" role="status"></span>
+                } @else {
+                  <i class="bi bi-arrow-clockwise"></i>
+                }
+                Actualizar
+              </button>
+            </div>
+
+            <div class="d-flex flex-wrap gap-3 small mb-2">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" id="source-sample" value="sample" [formControl]="previewSource">
+                <label class="form-check-label" for="source-sample">Datos de ejemplo</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" id="source-product" value="product" [formControl]="previewSource">
+                <label class="form-check-label" for="source-product">Un producto</label>
+              </div>
+              <div class="form-check form-switch ms-auto">
+                <input class="form-check-input" type="checkbox" role="switch" id="autoPreview" [formControl]="autoPreview">
+                <label class="form-check-label" for="autoPreview">Automática</label>
+              </div>
+            </div>
+
+            @if (previewSource.value === 'product') {
+              <div class="row g-2 mb-3">
+                <div class="col-12">
+                  <app-search-select
+                    [formControl]="productControl"
+                    [options]="productOptions()"
+                    placeholder="Elegir producto"
+                    searchPlaceholder="Buscar producto..."
+                    emptyText="No hay productos habilitados"
+                    [loading]="isRefreshingProducts()"
+                    (opened)="loadProducts()"
+                    (selectionChange)="onProductSelected($event)"
+                  ></app-search-select>
+                </div>
+                @if (variantOptions().length > 0) {
+                  <div class="col-12">
+                    <app-search-select
+                      [formControl]="variantControl"
+                      [options]="variantOptions()"
+                      placeholder="Elegir variante"
+                      searchPlaceholder="Buscar variante..."
+                    ></app-search-select>
+                  </div>
+                }
+              </div>
+            }
+
+            <div class="preview-area rounded border border-secondary d-flex align-items-center justify-content-center p-3">
+              @if (previewUrl(); as url) {
+                <img
+                  [src]="url"
+                  alt="Vista previa de la etiqueta"
+                  class="preview-image"
+                  [style.width.px]="previewWidthPx()"
+                  [class.opacity-50]="isPreviewing()"
+                >
+              } @else if (isPreviewing()) {
+                <span class="text-secondary small">
+                  <span class="spinner-border spinner-border-sm text-primary me-2" role="status"></span> Generando vista previa...
+                </span>
+              } @else {
+                <span class="text-secondary small text-center">
+                  <i class="bi bi-image d-block fs-3 mb-1"></i>
+                  Escribe el ZPL y el tamaño para ver la etiqueta
+                </span>
+              }
+            </div>
+
+            @if (previewError()) {
+              <div class="small text-warning mt-2"><i class="bi bi-exclamation-triangle me-1"></i>{{ previewError() }}</div>
+            }
+            <div class="form-text mt-2">
+              La genera Labelary (servicio externo, necesita internet) a {{ dpi() }} dpi. Es una aproximación: confirma el
+              diseño con la etiqueta de prueba al imprimir.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,137 @@
+<div class="container mt-4" data-bs-theme="dark">
+  <!-- Encabezado y Acciones -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Plantillas de etiqueta</h2>
+      <p class="text-secondary small mb-0">Diseños ZPL para imprimir las etiquetas de las variantes en la Zebra</p>
+    </div>
+    <a routerLink="/labels/templates/new" class="btn btn-primary d-flex align-items-center gap-2">
+      <i class="bi bi-plus-circle-fill"></i> Nueva Plantilla
+    </a>
+  </div>
+
+  <!-- Alerta de Error -->
+  @if (errorMessage()) {
+    <div class="alert alert-danger alert-dismissible fade show small" role="alert">
+      <i class="bi bi-exclamation-octagon me-1"></i> {{ errorMessage() }}
+      <button type="button" class="btn-close" (click)="errorMessage.set(null)" aria-label="Close"></button>
+    </div>
+  }
+
+  <!-- Filtros -->
+  <app-list-filters
+    [availability]="availabilityFilter()"
+    (availabilityChange)="setAvailabilityFilter($event)"
+    [canClear]="hasExtraFilters()"
+    (clear)="clearFilters()"
+    [formGroup]="filtersForm"
+  >
+    <div class="col-12 col-lg">
+      <app-search-input formControlName="search" inputId="search" placeholder="Nombre de la plantilla (Ej. QR 40x30)"></app-search-input>
+    </div>
+  </app-list-filters>
+
+  <!-- Tabla de Plantillas -->
+  <div class="card shadow-sm border-secondary bg-dark-subtle">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 table-dark">
+        <thead>
+          <tr>
+            <th scope="col" style="width: 80px;">ID</th>
+            <th scope="col">Plantilla</th>
+            <th scope="col" style="width: 140px;">Tamaño</th>
+            <th scope="col" style="width: 140px;">Estado</th>
+            <th scope="col" class="text-end" style="width: 70px;"><i class="bi bi-gear"></i></th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (isLoading()) {
+            <tr>
+              <td colspan="5" class="text-center py-5 text-secondary">
+                <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                Cargando plantillas...
+              </td>
+            </tr>
+          } @else {
+            @for (template of templates(); track template.id) {
+              <tr class="template-row" (click)="goToEdit(template)">
+                <th scope="row" class="text-secondary">#{{ template.id }}</th>
+                <td>
+                  <div class="fw-semibold">{{ template.name }}</div>
+                  @if (template.description) {
+                    <div class="small text-secondary">{{ template.description }}</div>
+                  }
+                </td>
+                <td class="font-monospace">{{ template.widthMm }} × {{ template.heightMm }} mm</td>
+                <td>
+                  @if (template.available) {
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                      <i class="bi bi-dot"></i> Activa
+                    </span>
+                  } @else {
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+                      <i class="bi bi-dot"></i> Inactiva
+                    </span>
+                  }
+                </td>
+                <td class="text-end" (click)="$event.stopPropagation()">
+                  <div ngbDropdown container="body" placement="bottom-end" class="d-inline-block">
+                    <button type="button" class="btn btn-sm btn-outline-secondary gear-toggle" title="Opciones" aria-label="Opciones" ngbDropdownToggle>
+                      <i class="bi bi-gear-fill"></i>
+                    </button>
+                    <div ngbDropdownMenu class="dropdown-menu-dark">
+                      <button ngbDropdownItem (click)="goToEdit(template)">
+                        <i class="bi bi-pencil-fill me-2 text-warning"></i> Editar
+                      </button>
+                      <div class="dropdown-divider"></div>
+                      @if (template.available) {
+                        <button ngbDropdownItem class="text-danger" (click)="deleteTemplate(template)">
+                          <i class="bi bi-trash-fill me-2"></i> Eliminar
+                        </button>
+                      } @else {
+                        <button ngbDropdownItem (click)="reactivateTemplate(template)">
+                          <i class="bi bi-arrow-counterclockwise me-2 text-success"></i> Habilitar
+                        </button>
+                      }
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="text-center text-secondary py-5">
+                  <i class="bi bi-upc-scan display-6 d-block mb-2"></i>
+                  @if (hasExtraFilters()) {
+                    Ninguna plantilla coincide con la búsqueda.
+                  } @else {
+                    No se encontraron plantillas.
+                  }
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginación Footer -->
+    @if (totalRecords() > pageSize()) {
+      <div class="card-footer pagination-footer bg-dark border-secondary d-flex justify-content-between align-items-center py-3">
+        <span class="small text-secondary">
+          Total: <strong>{{ totalRecords() }}</strong> registros
+        </span>
+        <ngb-pagination
+          [collectionSize]="totalRecords()"
+          [page]="currentPage()"
+          [pageSize]="pageSize()"
+          [maxSize]="5"
+          [rotate]="true"
+          [boundaryLinks]="true"
+          (pageChange)="onPageChange($event)"
+          size="sm"
+          class="mb-0"
+        ></ngb-pagination>
+      </div>
+    }
+  </div>
+</div>

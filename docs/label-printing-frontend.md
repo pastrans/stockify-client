@@ -171,14 +171,14 @@ Un 400 de plantilla puede juntar varios problemas de marcadores separados por `;
 
 **Como** administrador, **quiero** crear, editar y retirar plantillas viendo cómo quedan, **para** no gastar etiquetas probando.
 
-- [ ] Ruta `/labels/templates` con listado (`app-list-filters`, pestañas Todos / Habilitadas / Inhabilitadas y buscador por nombre): nombre, tamaño, descripción y acciones.
-- [ ] Rutas `/labels/templates/new` y `/labels/templates/:id/edit` con el formulario: nombre, descripción, ancho y alto en mm, y el ZPL (área de texto con fuente monoespaciada).
-- [ ] Al pegar o editar el ZPL, si trae `^PW`/`^LL`, proponer el tamaño en mm (RF-17).
-- [ ] Panel de marcadores: el catálogo con su descripción; al pulsar uno se inserta en el cursor.
-- [ ] Vista previa con **Labelary** (§7 de los requerimientos): con datos de ejemplo o de una variante elegida, bajo demanda o al dejar de escribir; si falla, aviso sin bloquear.
-- [ ] Advertencias en vivo (`templateWarnings`): sin `^CI28`, con `^JUS`, `^PW`/`^LL` distinto del tamaño.
-- [ ] Eliminar (soft-delete) y reactivar, con confirmación.
-- [ ] Entrada en el menú nuevo **"Etiquetas"** (desplegable del `main-layout`): Cola de impresión, Plantillas y Guías.
+- [x] Ruta `/labels/templates` con listado (`app-list-filters`, pestañas Todos / Habilitadas / Inhabilitadas y buscador por nombre): nombre, tamaño, descripción y acciones.
+- [x] Rutas `/labels/templates/new` y `/labels/templates/:id/edit` con el formulario: nombre, descripción, ancho y alto en mm, y el ZPL (área de texto con fuente monoespaciada).
+- [x] Al pegar o editar el ZPL, si trae `^PW`/`^LL`, proponer el tamaño en mm (RF-17).
+- [x] Panel de marcadores: el catálogo con su descripción; al pulsar uno se inserta en el cursor.
+- [x] Vista previa con **Labelary** (§7 de los requerimientos): con datos de ejemplo o de una variante elegida, bajo demanda o al dejar de escribir; si falla, aviso sin bloquear.
+- [x] Advertencias en vivo (`templateWarnings`): sin `^CI28`, con `^JUS`, `^PW`/`^LL` distinto del tamaño.
+- [x] Eliminar (soft-delete) y reactivar, con confirmación.
+- [x] Entrada en el menú nuevo **"Etiquetas"** (desplegable del `main-layout`): Cola de impresión, Plantillas y Guías. *Por ahora solo Plantillas; la cola y las guías se agregan en US-L6 y US-L7.*
 
 **Hecho cuando:** se pueden crear, editar, previsualizar y retirar plantillas, y los errores de marcadores se ven en español.
 
