@@ -138,11 +138,11 @@ Un 400 de plantilla puede juntar varios problemas de marcadores separados por `;
 
 **Como** desarrollador, **quiero** los modelos, los servicios y el generador de ZPL, **para** construir las pantallas de etiquetas sobre una base probada.
 
-- [ ] `shared/models/label-settings.model.ts`: `LabelSettings`, `PrinterDpi`, `SizeAttributeRef` y `UpdateLabelSettingsRequest` (parcial).
-- [ ] `shared/models/label-template.model.ts`: `LabelTemplate`, `CreateLabelTemplateRequest`, `UpdateLabelTemplateRequest`, `LabelTemplatesListResponse`, `LabelTemplateFilters`.
-- [ ] `core/services/settings.service.ts`: `getLabelSettings()` y `updateLabelSettings(data)`.
-- [ ] `core/services/label-template.service.ts`: CRUD con `page`, `limit`, `available` y `search`.
-- [ ] `shared/utils/zpl/` (funciones puras, sin Angular):
+- [x] `shared/models/label-settings.model.ts`: `LabelSettings`, `PrinterDpi`, `SizeAttributeRef` y `UpdateLabelSettingsRequest` (parcial).
+- [x] `shared/models/label-template.model.ts`: `LabelTemplate`, `CreateLabelTemplateRequest`, `UpdateLabelTemplateRequest`, `LabelTemplatesListResponse`, `LabelTemplateFilters`.
+- [x] `core/services/settings.service.ts`: `getLabelSettings()` y `updateLabelSettings(data)`.
+- [x] `core/services/label-template.service.ts`: CRUD con `page`, `limit`, `available` y `search`.
+- [x] `shared/utils/zpl/` (funciones puras, sin Angular):
   - Catálogo de marcadores (igual que el del backend) y su análisis: variable, `attr.X` y recorte.
   - `splitTemplate(zpl)` → `{ setup, label }`: los bloques anteriores al último `^XA … ^XZ` y la etiqueta (RF-20).
   - `sanitizeZplValue(value)`: quita `^` y `~` (RF-14).
@@ -151,7 +151,7 @@ Un 400 de plantilla puede juntar varios problemas de marcadores separados por `;
   - `buildPrintJob(template, items, context)` → ZPL completo: la configuración una vez y una etiqueta por variante con cantidad > 0 (RF-22, RF-23).
   - `templateWarnings(zpl, widthMm, heightMm, dpi)`: sin `^CI28`, con `^JUS`, y `^PW`/`^LL` que no coinciden con el tamaño (RF-21).
   - `sizeFromZpl(zpl, dpi)` → `{ widthMm, heightMm } | null` a partir de `^PW`/`^LL` (RF-17).
-- [ ] Pruebas del motor (script con casos conocidos, como en la exportación): las tres plantillas semilla, `11.25 → 1125`, `2.5 → 0250`, `100.5 → 10050`, `^` y `~` en un nombre, recorte, `{{attr.X}}` ausente, `^PQ` con y sin parámetros.
+- [x] Pruebas del motor (script con casos conocidos, como en la exportación): las tres plantillas semilla, `11.25 → 1125`, `2.5 → 0250`, `100.5 → 10050`, `^` y `~` en un nombre, recorte, `{{attr.X}}` ausente, `^PQ` con y sin parámetros.
 
 **Hecho cuando:** compila, los servicios responden contra la API local y el motor genera, para las plantillas semilla, el mismo ZPL que se probó en Labelary.
 
