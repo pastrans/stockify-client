@@ -201,13 +201,13 @@ Un 400 de plantilla puede juntar varios problemas de marcadores separados por `;
 
 **Como** usuario, **quiero** imprimir las etiquetas de las variantes de un producto desde su pantalla, **para** etiquetar lo que acabo de registrar.
 
-- [ ] Pestaña nueva en `product-form`, visible si el producto está guardado y tiene variantes activas (RF-26).
-- [ ] Tabla de variantes activas: SKU, combinación, talla (`{{size}}`) y cantidad (empieza en 0, editable).
-- [ ] **Aplicar a todas: N** y "Poner todo en 0".
-- [ ] Selector de plantilla (activas, `search-select`) y vista previa (Labelary) de la primera variante con cantidad > 0.
-- [ ] Si el producto no está `synced`: aviso fijo arriba de la pestaña (RF-27).
-- [ ] **Imprimir** (flujo común, abajo), **Descargar .zpl** (RF-34) y **Agregar a la cola** (suma cantidades si la variante ya está; RF-29).
-- [ ] Flujo común de impresión, reutilizable por la cola (`features/labels/label-print-flow.service.ts` o similar):
+- [x] Pestaña nueva en `product-form`, visible si el producto está guardado y tiene variantes activas (RF-26).
+- [x] Tabla de variantes activas: SKU, combinación, talla (`{{size}}`) y cantidad (empieza en 0, editable).
+- [x] **Aplicar a todas: N** y "Poner todo en 0".
+- [x] Selector de plantilla (activas, `search-select`) y vista previa (Labelary) de la primera variante con cantidad > 0.
+- [x] Si el producto no está `synced`: aviso fijo arriba de la pestaña (RF-27).
+- [x] **Imprimir** (flujo común, abajo), **Descargar .zpl** (RF-34) y **Agregar a la cola** (suma cantidades si la variante ya está; RF-29).
+- [x] Flujo común de impresión, reutilizable por la cola (`features/labels/label-print-flow.service.ts`):
   1. Avisos previos en una sola confirmación: productos no sincronizados, precios ≥ 100 y filas omitidas (RF-33).
   2. Verificar la impresora (US-L4); si falla, no imprimir.
   3. Con más de una etiqueta: imprimir **una de prueba** y abrir el modal "Salió bien, imprimir el resto" / "Reimprimir prueba" / "Cancelar" (RF-32).

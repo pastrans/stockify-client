@@ -165,7 +165,7 @@
           class="nav-link"
           role="tab"
           [class.active]="activeTab() === 'general'"
-          (click)="activeTab.set('general')"
+          (click)="setTab('general')"
         >
           Información General
           @if (hasGeneralErrors()) {
@@ -179,7 +179,7 @@
           class="nav-link"
           role="tab"
           [class.active]="activeTab() === 'attributes'"
-          (click)="activeTab.set('attributes')"
+          (click)="setTab('attributes')"
         >
           Atributos
           @if (attributeLines.length > 0) {
@@ -198,7 +198,7 @@
           [class.active]="activeTab() === 'variants'"
           [disabled]="!product()"
           [title]="product() ? '' : 'Guarda el producto para generar sus variantes'"
-          (click)="activeTab.set('variants')"
+          (click)="setTab('variants')"
         >
           Variantes y Existencias
           @if (product(); as current) {
@@ -206,6 +206,19 @@
           }
         </button>
       </li>
+      @if (hasActiveVariants()) {
+        <li class="nav-item" role="presentation">
+          <button
+            type="button"
+            class="nav-link"
+            role="tab"
+            [class.active]="activeTab() === 'labels'"
+            (click)="setTab('labels')"
+          >
+            <i class="bi bi-upc-scan me-1"></i> Etiquetas
+          </button>
+        </li>
+      }
     </ul>
 
     <!-- Las pestañas se ocultan (no se destruyen) para conservar los cambios sin guardar -->
@@ -308,8 +321,17 @@
           </div>
         }
 
-        <!-- Acciones al final (en la pestaña de variantes, el guardado de existencias tiene las suyas) -->
-        @if (activeTab() !== 'variants') {
+        <!-- PESTAÑA: ETIQUETAS (se monta al abrirla por primera vez) -->
+        @if (product(); as current) {
+          @if (labelsTabVisited() && hasActiveVariants()) {
+            <div [hidden]="activeTab() !== 'labels'">
+              <app-product-labels [product]="current"></app-product-labels>
+            </div>
+          }
+        }
+
+        <!-- Acciones al final (las pestañas de variantes y etiquetas tienen las suyas) -->
+        @if (activeTab() !== 'variants' && activeTab() !== 'labels') {
           <div class="d-flex flex-column flex-sm-row justify-content-end gap-2 mt-4 pt-3 border-top border-secondary">
             <ng-container *ngTemplateOutlet="formActions"></ng-container>
           </div>

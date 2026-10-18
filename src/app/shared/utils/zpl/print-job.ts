@@ -31,15 +31,22 @@ export function renderLabel(label: string, product: Product, variant: ProductVar
 /**
  * Trabajo de impresión completo (RF-23): los bloques de configuración de la plantilla una sola
  * vez y después una etiqueta por variante con cantidad > 0, con sus copias en ^PQ.
+ * includeSetup = false para el resto tras la etiqueta de prueba: la configuración ya se envió.
  */
-export function buildPrintJob(templateZpl: string, items: LabelPrintItem[], context: LabelContext): string {
+export function buildPrintJob(
+  templateZpl: string,
+  items: LabelPrintItem[],
+  context: LabelContext,
+  options: { includeSetup?: boolean } = {}
+): string {
   const { setup, label } = splitTemplate(templateZpl);
 
   const labels = items
     .filter(item => item.quantity > 0)
     .map(item => setQuantity(renderLabel(label, item.product, item.variant, context), item.quantity));
 
-  return [setup, ...labels].filter(part => part.length > 0).join('\n');
+  const head = options.includeSetup === false ? '' : setup;
+  return [head, ...labels].filter(part => part.length > 0).join('\n');
 }
 
 // Total de etiquetas físicas de un trabajo

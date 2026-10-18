@@ -24,8 +24,9 @@ import {
 } from './product-attribute-lines/product-attribute-lines.component';
 import { ProductVariantsComponent } from './product-variants/product-variants.component';
 import { ProductOdooActionsService } from '../product-odoo-actions.service';
+import { ProductLabelsComponent } from './product-labels/product-labels.component';
 
-type FormTab = 'general' | 'attributes' | 'variants';
+type FormTab = 'general' | 'attributes' | 'variants' | 'labels';
 
 // Letras, números y guiones; sin guion al inicio ni al final (el guion separa las partes del SKU)
 const SKU_PREFIX_PATTERN = /^[A-Za-z0-9]+(-[A-Za-z0-9]+)*$/;
@@ -50,7 +51,8 @@ const toast = Swal.mixin({
     ImageUploadComponent,
     MultiSearchSelectComponent,
     ProductAttributeLinesComponent,
-    ProductVariantsComponent
+    ProductVariantsComponent,
+    ProductLabelsComponent
   ],
   templateUrl: './product-form.component.html',
   styleUrls: ['./product-form.component.css']
@@ -76,6 +78,10 @@ export class ProductFormComponent implements OnInit {
   notFound = signal<boolean>(false);
   errorMessage = signal<string | null>(null);
   activeTab = signal<FormTab>('general');
+  // La pestaña de etiquetas se monta la primera vez que se abre (pide plantillas y vista previa)
+  labelsTabVisited = signal<boolean>(false);
+  // Solo hay etiquetas que imprimir si el producto tiene variantes activas (RF-26)
+  hasActiveVariants = computed(() => !!this.product()?.variants.some(v => v.available));
 
   // Catálogos
   attributes = signal<Attribute[]>([]);
@@ -134,8 +140,9 @@ export class ProductFormComponent implements OnInit {
       this.notFound.set(true);
       return;
     }
-    if (this.route.snapshot.fragment === 'variants') {
-      this.activeTab.set('variants');
+    const fragment = this.route.snapshot.fragment;
+    if (fragment === 'variants' || fragment === 'labels') {
+      this.setTab(fragment);
     }
     this.loadProduct(id);
   }
@@ -354,6 +361,11 @@ export class ProductFormComponent implements OnInit {
         this.isSaving.set(false);
       }
     });
+  }
+
+  setTab(tab: FormTab): void {
+    this.activeTab.set(tab);
+    if (tab === 'labels') this.labelsTabVisited.set(true);
   }
 
   // --- ACCIONES DE ODOO (US-F5) ---
