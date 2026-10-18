@@ -53,3 +53,12 @@ export function buildPrintJob(
 export function totalLabels(items: LabelPrintItem[]): number {
   return items.reduce((sum, item) => sum + Math.max(0, Math.floor(item.quantity)), 0);
 }
+
+// Máximo de copias por fila en la pestaña del producto y en la cola
+export const MAX_LABEL_QUANTITY = 999;
+
+// Entero entre 0 y MAX_LABEL_QUANTITY (lo que no es número cuenta como 0)
+export function clampLabelQuantity(value: unknown): number {
+  const parsed = Math.floor(Number(value));
+  return Number.isFinite(parsed) ? Math.min(MAX_LABEL_QUANTITY, Math.max(0, parsed)) : 0;
+}

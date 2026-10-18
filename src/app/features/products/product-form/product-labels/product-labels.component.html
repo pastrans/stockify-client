@@ -16,145 +16,77 @@
   </div>
 }
 
-<div class="mb-3">
-  <app-printer-status [testLabel]="printerTestLabel()"></app-printer-status>
-</div>
-
-@if (isLoading()) {
-  <div class="text-center py-4 text-secondary">
-    <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
-    Cargando plantillas...
-  </div>
-} @else if (templates().length === 0) {
-  <div class="text-center text-secondary py-4">
-    <i class="bi bi-file-earmark-code display-6 d-block mb-2"></i>
-    No hay plantillas de etiqueta habilitadas.
-    <div class="mt-2"><a routerLink="/labels/templates/new" class="btn btn-sm btn-primary">Crear plantilla</a></div>
-  </div>
-} @else {
-  <div class="row g-4">
-    <!-- VARIANTES Y CANTIDADES -->
-    <div class="col-12 col-lg-7">
-      <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
-        <div>
-          <label for="applyAll" class="form-label small fw-semibold mb-1">Aplicar a todas</label>
-          <div class="input-group input-group-sm apply-all">
-            <input type="number" id="applyAll" class="form-control text-center" min="0" [max]="maxQuantity" step="1" [formControl]="applyAllControl">
-            <button type="button" class="btn btn-outline-secondary" (click)="applyToAll(applyAllControl.value)">Aplicar</button>
-          </div>
+<div class="row g-4">
+  <!-- VARIANTES Y CANTIDADES -->
+  <div class="col-12 col-lg-7">
+    <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
+      <div>
+        <label for="applyAll" class="form-label small fw-semibold mb-1">Aplicar a todas</label>
+        <div class="input-group input-group-sm apply-all">
+          <input type="number" id="applyAll" class="form-control text-center" min="0" [max]="maxQuantity" step="1" [formControl]="applyAllControl">
+          <button type="button" class="btn btn-outline-secondary" (click)="applyToAll(applyAllControl.value)">Aplicar</button>
         </div>
-        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="applyToAll(0)">Poner todo en 0</button>
-        <span class="small text-secondary ms-auto">Total: <strong class="text-light">{{ total() }}</strong> etiquetas</span>
       </div>
-      @if (settings()?.sizeAttributeIds?.length === 0) {
-        <div class="small text-warning mb-2">
-          <i class="bi bi-exclamation-triangle me-1"></i> No hay atributos de talla configurados: la talla saldrá vacía.
-          <a routerLink="/settings" [queryParams]="{ tab: 'labels' }">Configurarlos</a>
-        </div>
-      }
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="applyToAll(0)">Poner todo en 0</button>
+      <span class="small text-secondary ms-auto">Total: <strong class="text-light">{{ total() }}</strong> etiquetas</span>
+    </div>
+    @if (settings()?.sizeAttributeIds?.length === 0) {
+      <div class="small text-warning mb-2">
+        <i class="bi bi-exclamation-triangle me-1"></i> No hay atributos de talla configurados: la talla saldrá vacía.
+        <a routerLink="/settings" [queryParams]="{ tab: 'labels' }">Configurarlos</a>
+      </div>
+    }
 
-      <div class="table-responsive border border-secondary rounded">
-        <table class="table table-dark table-hover align-middle mb-0 small">
-          <thead>
-            <tr>
-              <th scope="col">SKU</th>
-              <th scope="col">Combinación</th>
-              <th scope="col">
-                Talla
-                <a
-                  routerLink="/settings"
-                  [queryParams]="{ tab: 'labels' }"
-                  class="link-secondary ms-1"
-                  title="Elegir qué atributos son tallas (Configuración → Etiquetas)"
-                  aria-label="Configurar atributos de talla"
-                ><i class="bi bi-gear"></i></a>
-              </th>
-              <th scope="col" class="text-center" style="width: 110px;">Cantidad</th>
+    <div class="table-responsive border border-secondary rounded">
+      <table class="table table-dark table-hover align-middle mb-0 small">
+        <thead>
+          <tr>
+            <th scope="col">SKU</th>
+            <th scope="col">Combinación</th>
+            <th scope="col">
+              Talla
+              <a
+                routerLink="/settings"
+                [queryParams]="{ tab: 'labels' }"
+                class="link-secondary ms-1"
+                title="Elegir qué atributos son tallas (Configuración → Etiquetas)"
+                aria-label="Configurar atributos de talla"
+              ><i class="bi bi-gear"></i></a>
+            </th>
+            <th scope="col" class="text-center" style="width: 110px;">Cantidad</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items(); track item.variant.id) {
+            <tr [class.table-active]="item.quantity > 0">
+              <td><span class="badge bg-black border border-info text-info font-monospace">{{ item.variant.sku }}</span></td>
+              <td>{{ combinationLabel(item.variant) }}</td>
+              <td>{{ sizeOf(item.variant) || '—' }}</td>
+              <td>
+                <input
+                  type="number"
+                  class="form-control form-control-sm text-center font-monospace"
+                  min="0"
+                  [max]="maxQuantity"
+                  step="1"
+                  [value]="item.quantity"
+                  [attr.aria-label]="'Cantidad de ' + item.variant.sku"
+                  (change)="setQuantity(item.variant, $any($event.target).value)"
+                >
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            @for (item of items(); track item.variant.id) {
-              <tr [class.table-active]="item.quantity > 0">
-                <td><span class="badge bg-black border border-info text-info font-monospace">{{ item.variant.sku }}</span></td>
-                <td>{{ combinationLabel(item.variant) }}</td>
-                <td>{{ sizeOf(item.variant) || '—' }}</td>
-                <td>
-                  <input
-                    type="number"
-                    class="form-control form-control-sm text-center font-monospace"
-                    min="0"
-                    [max]="maxQuantity"
-                    step="1"
-                    [value]="item.quantity"
-                    [attr.aria-label]="'Cantidad de ' + item.variant.sku"
-                    (change)="setQuantity(item.variant, $any($event.target).value)"
-                  >
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- PLANTILLA, VISTA PREVIA Y ACCIONES -->
-    <div class="col-12 col-lg-5">
-      <label for="labelTemplate" class="form-label small fw-semibold">Plantilla</label>
-      <app-search-select
-        inputId="labelTemplate"
-        [formControl]="templateControl"
-        [options]="templateOptions()"
-        placeholder="Elegir plantilla"
-        searchPlaceholder="Buscar plantilla..."
-        emptyText="No hay plantillas habilitadas"
-        [loading]="isRefreshingTemplates()"
-        (opened)="refreshTemplates()"
-      ></app-search-select>
-
-      <div class="preview-area rounded border border-secondary d-flex align-items-center justify-content-center p-3 mt-3">
-        @if (previewUrl(); as url) {
-          <img [src]="url" alt="Vista previa de la etiqueta" class="preview-image" [style.width.px]="previewWidthPx()" [class.opacity-50]="isPreviewing()">
-        } @else if (isPreviewing()) {
-          <span class="text-secondary small">
-            <span class="spinner-border spinner-border-sm text-primary me-2" role="status"></span> Generando vista previa...
-          </span>
-        } @else {
-          <span class="text-secondary small"><i class="bi bi-image me-1"></i> Sin vista previa</span>
-        }
-      </div>
-      <div class="d-flex justify-content-between align-items-start gap-2 mt-1">
-        <span class="form-text mt-0">
-          @if (previewItem(); as item) {
-            {{ item.variant.sku }} · Labelary (aproximada)
           }
-        </span>
-        <button type="button" class="btn btn-link btn-sm p-0" [disabled]="isPreviewing()" (click)="refreshPreview()">Actualizar</button>
-      </div>
-      @if (previewError()) {
-        <div class="small text-warning mt-1"><i class="bi bi-exclamation-triangle me-1"></i>{{ previewError() }}</div>
-      }
-
-      <div class="d-grid gap-2 mt-3">
-        <button type="button" class="btn btn-primary d-flex align-items-center justify-content-center gap-2" [disabled]="isBusy() || total() === 0 || !selectedTemplate()" (click)="print()">
-          @if (isBusy()) {
-            <span class="spinner-border spinner-border-sm" role="status"></span>
-          } @else {
-            <i class="bi bi-printer"></i>
-          }
-          Imprimir {{ total() }} {{ total() === 1 ? 'etiqueta' : 'etiquetas' }}
-        </button>
-        <div class="d-flex gap-2">
-          <button type="button" class="btn btn-outline-secondary flex-fill" [disabled]="isBusy() || total() === 0 || !selectedTemplate()" (click)="download()">
-            <i class="bi bi-download me-1"></i> Descargar .zpl
-          </button>
-          <button type="button" class="btn btn-outline-info flex-fill" [disabled]="total() === 0" (click)="addToQueue()">
-            <i class="bi bi-plus-square me-1"></i> Agregar a la cola
-          </button>
-        </div>
-        @if (total() > 1) {
-          <span class="form-text text-center">Primero se imprime una etiqueta de prueba.</span>
-        }
-      </div>
+        </tbody>
+      </table>
     </div>
   </div>
-}
+
+  <!-- IMPRESORA, PLANTILLA, VISTA PREVIA Y ACCIONES -->
+  <div class="col-12 col-lg-5">
+    <app-label-job-panel [items]="items()" [settings]="settings()">
+      <button panelActions type="button" class="btn btn-outline-info flex-fill" [disabled]="total() === 0" (click)="addToQueue()">
+        <i class="bi bi-plus-square me-1"></i> Agregar a la cola
+      </button>
+    </app-label-job-panel>
+  </div>
+</div>

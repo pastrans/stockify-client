@@ -33,6 +33,8 @@ const GENERIC_PREVIEW_SIZE_MM = { width: 40, height: 30 };
   templateUrl: './printer-status.component.html',
   styles: [
     '.position-input { width: 130px; }',
+    // El selector ocupa su propia línea en columnas estrechas y los botones bajan debajo
+    '.printer-picker { min-width: 260px; }',
     '.expected-image { max-width: 220px; height: auto; background: #fff; box-shadow: 0 0 0 1px rgba(255,255,255,.15); image-rendering: pixelated; }',
     '.expected-empty { width: 160px; height: 120px; border: 1px dashed rgba(255,255,255,.2); border-radius: .375rem; }'
   ]
