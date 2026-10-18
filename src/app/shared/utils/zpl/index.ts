@@ -4,3 +4,4 @@ export * from './zpl-template';
 export * from './label-values';
 export * from './print-job';
 export * from './sample';
+export * from './host-status';

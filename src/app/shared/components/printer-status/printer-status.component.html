@@ -1,0 +1,94 @@
+<div class="card shadow-sm border-secondary bg-dark-subtle">
+  <div class="card-body py-3">
+    <div class="d-flex flex-column flex-md-row align-items-md-center gap-2">
+      <div class="d-flex align-items-center gap-2 flex-grow-1">
+        <i class="bi bi-printer fs-5 text-primary"></i>
+        <label for="printerSelect" class="small fw-semibold text-nowrap mb-0">Impresora</label>
+        <select
+          id="printerSelect"
+          class="form-select form-select-sm"
+          [ngModel]="selectedUid() ?? ''"
+          (ngModelChange)="onSelect($event)"
+          [disabled]="isLoading() || printers().length === 0"
+        >
+          <option value="">Predeterminada de Browser Print</option>
+          @for (printer of printers(); track printer.uid) {
+            <option [value]="printer.uid">
+              {{ printer.name }} ({{ printer.connection.toUpperCase() }}){{ printer.uid === defaultUid() ? ' · predeterminada' : '' }}
+            </option>
+          }
+        </select>
+        <button type="button" class="btn btn-sm btn-outline-secondary" title="Buscar impresoras" aria-label="Buscar impresoras" [disabled]="isLoading()" (click)="loadPrinters()">
+          @if (isLoading()) {
+            <span class="spinner-border spinner-border-sm" role="status"></span>
+          } @else {
+            <i class="bi bi-arrow-clockwise"></i>
+          }
+        </button>
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-info d-flex align-items-center justify-content-center gap-1" [disabled]="isChecking()" (click)="verify()">
+        @if (isChecking()) {
+          <span class="spinner-border spinner-border-sm" role="status"></span>
+        } @else {
+          <i class="bi bi-plug"></i>
+        }
+        Verificar impresora
+      </button>
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
+        title="Imprime una etiqueta con el nombre de la impresora y la hora"
+        [disabled]="isPrintingTest() || isChecking()"
+        (click)="printTest()"
+      >
+        @if (isPrintingTest()) {
+          <span class="spinner-border spinner-border-sm" role="status"></span>
+        } @else {
+          <i class="bi bi-printer"></i>
+        }
+        Imprimir prueba
+      </button>
+    </div>
+
+    <!-- Browser Print no responde -->
+    @if (connectionError(); as error) {
+      <div class="alert alert-warning small mt-3 mb-0" role="alert">
+        <i class="bi bi-exclamation-triangle me-1"></i> {{ error }}
+      </div>
+    }
+
+    <!-- Resultado de la verificación -->
+    @if (checked(); as result) {
+      @if (result.status.ready) {
+        <div class="small text-success mt-2">
+          <i class="bi bi-check-circle-fill me-1"></i> {{ result.device.name }} está lista para imprimir.
+        </div>
+      } @else {
+        <div class="alert alert-danger small mt-3 mb-0" role="alert">
+          <div class="fw-semibold mb-1"><i class="bi bi-x-circle me-1"></i> {{ result.device.name }} no puede imprimir:</div>
+          <ul class="mb-0 ps-3">
+            @for (problem of result.status.problems; track problem) {
+              <li>{{ problem }}</li>
+            }
+          </ul>
+        </div>
+      }
+      @for (warning of result.status.warnings; track warning) {
+        <div class="small text-warning mt-2"><i class="bi bi-exclamation-triangle me-1"></i>{{ warning }}</div>
+      }
+    }
+
+    <!-- Sin comunicación con la impresora: comprobaciones de Bazar-angular -->
+    @if (checkError(); as error) {
+      <div class="alert alert-danger small mt-3 mb-0" role="alert">
+        <div class="fw-semibold mb-1"><i class="bi bi-x-circle me-1"></i> {{ error }}</div>
+        <ul class="mb-0 ps-3">
+          <li>¿La luz del botón de la impresora está verde fija?</li>
+          <li>¿El cable USB está bien conectado en ambos extremos?</li>
+          <li>¿Zebra Browser Print está abierto (ícono junto al reloj de Windows)?</li>
+          <li>Si un trabajo quedó atascado: clic derecho en el ícono de Browser Print → Exit, y vuelve a abrirlo.</li>
+        </ul>
+      </div>
+    }
+  </div>
+</div>

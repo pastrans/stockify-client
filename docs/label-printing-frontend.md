@@ -186,14 +186,14 @@ Un 400 de plantilla puede juntar varios problemas de marcadores separados por `;
 
 **Como** usuario, **quiero** elegir la Zebra y saber si está lista, **para** imprimir sin sorpresas.
 
-- [ ] Copiar los SDK de Bazar-angular (`BrowserPrint-3.1.250.min.js` y `BrowserPrint-Zebra-1.1.250.min.js`) a `src/assets/js/` y cargarlos en `angular.json` (`scripts`). Declarar los globales en un `.d.ts`.
-- [ ] `core/services/zebra-printer.service.ts`:
+- [x] ~~Copiar los SDK de Bazar-angular a `src/assets/js/` y cargarlos en `angular.json`.~~ *Decidido (2026-10-18): sin SDK. El servicio usa con `fetch` la API HTTP de Browser Print (`/available`, `/default`, `/write`, `/read`), la misma que envuelven los SDK. Browser Print acepta CORS y private network access (comprobado), y así no hay scripts globales ni dependencia de la librería de Zebra para el estado.*
+- [x] `core/services/zebra-printer.service.ts`:
   - `listPrinters()` (`getLocalDevices`) y la impresora elegida, recordada en `localStorage`; sin elegir, la predeterminada (RF-30).
   - `checkConnection()`: `~HS` con límite de 2 s, como el supervisor de Bazar (RF-31).
-  - `getStatus()`: listo, sin papel, cabezal abierto, en pausa… (librería `BrowserPrint-Zebra`).
-  - `send(zpl)` como `Promise`, con el reintento de Bazar cuando el SDK falla por el nombre del dispositivo.
-- [ ] Componente compartido `app-printer-status`: impresora elegida, selector, botón "Verificar impresora" y estado. Si falla, la lista de comprobaciones (luz verde fija, cable USB, Browser Print abierto) y el enlace a la guía.
-- [ ] Mensaje claro si Browser Print no está instalado o no responde (incluido el caso HTTPS, §9 de los requerimientos).
+  - `getStatus()`: listo, sin papel, cabezal abierto, en pausa… *Se interpreta la respuesta de `~HS` (`shared/utils/zpl/host-status.ts`), dentro de `checkStatus()`.*
+  - `send(zpl)` como `Promise`. *El reintento de Bazar era un parche del SDK; sin SDK no hace falta.*
+- [x] Componente compartido `app-printer-status`: impresora elegida, selector, botón "Verificar impresora" y estado. Si falla, la lista de comprobaciones (luz verde fija, cable USB, Browser Print abierto) y el enlace a la guía.
+- [x] Mensaje claro si Browser Print no está instalado o no responde (incluido el caso HTTPS, §9 de los requerimientos).
 
 **Hecho cuando:** con la Zebra conectada, se elige, se verifica y se imprime una etiqueta de prueba fija; sin Browser Print, el mensaje explica qué falta.
 
