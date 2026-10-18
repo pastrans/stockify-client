@@ -159,11 +159,11 @@ Un 400 de plantilla puede juntar varios problemas de marcadores separados por `;
 
 **Como** administrador, **quiero** configurar la impresora, el nombre de la tienda y qué atributos son tallas, **para** que las etiquetas salgan con los datos correctos.
 
-- [ ] `/settings` pasa a tener pestañas: **Exportación** (la pantalla actual) y **Etiquetas**.
-- [ ] Resolución: `203`, `300` o `600` dpi, con la ayuda "La Zebra GK420d es de 203 dpi".
-- [ ] Nombre de la tienda (máx. 60, puede quedar vacío).
-- [ ] Atributos de talla: elegir entre los atributos existentes (`multi-search-select`) y **ordenarlos** (subir/bajar), con la explicación de que `{{size}}` toma el primero que tenga cada variante. Los inactivos se muestran marcados.
-- [ ] Aviso de valores por defecto si `updatedAt` es `null`; guardado con confirmación (sweetalert2).
+- [x] `/settings` pasa a tener pestañas: **Exportación** (la pantalla actual) y **Etiquetas**.
+- [x] Resolución: `203`, `300` o `600` dpi, con la ayuda "La Zebra GK420d es de 203 dpi".
+- [x] Nombre de la tienda (máx. 60, puede quedar vacío).
+- [x] Atributos de talla: elegir entre los atributos existentes (`multi-search-select`) y **ordenarlos** (subir/bajar), con la explicación de que `{{size}}` toma el primero que tenga cada variante. Los inactivos se muestran marcados.
+- [x] Aviso de valores por defecto si `updatedAt` es `null`; guardado con confirmación (sweetalert2).
 
 **Hecho cuando:** se leen y guardan los tres ajustes, y el orden de las tallas se conserva.
 

@@ -1,0 +1,142 @@
+<p class="text-secondary small mb-4">Datos que usan las plantillas al imprimir etiquetas en la impresora Zebra.</p>
+
+<!-- Alerta de Error -->
+@if (errorMessage()) {
+  <div class="alert alert-danger alert-dismissible fade show small" role="alert">
+    <i class="bi bi-exclamation-octagon me-1"></i> {{ errorMessage() }}
+    <button type="button" class="btn-close" (click)="errorMessage.set(null)" aria-label="Close"></button>
+  </div>
+}
+
+@if (isLoading()) {
+  <div class="text-center py-5 text-secondary">
+    <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+    Cargando configuración...
+  </div>
+} @else {
+  @if (settings(); as current) {
+    <!-- Valores por defecto o fecha del último guardado -->
+    @if (current.updatedAt) {
+      <p class="text-secondary small mb-3">
+        <i class="bi bi-clock-history me-1"></i> Última modificación: {{ current.updatedAt | date: 'dd/MM/yyyy HH:mm' }}
+      </p>
+    } @else {
+      <div class="alert alert-info small d-flex align-items-start gap-2" role="alert">
+        <i class="bi bi-info-circle"></i>
+        <span>Se están usando los <strong>valores por defecto</strong>. Revísalos y guárdalos antes de imprimir.</span>
+      </div>
+    }
+
+    <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()">
+      <!-- IMPRESORA Y TIENDA -->
+      <div class="card shadow-sm border-secondary bg-dark-subtle mb-3">
+        <div class="card-body">
+          <h5 class="fw-semibold mb-3"><i class="bi bi-printer me-2 text-primary"></i>Impresora y tienda</h5>
+          <div class="row">
+            <div class="col-12 col-md-6 mb-3">
+              <label class="form-label small fw-semibold d-block">Resolución de la impresora</label>
+              <div class="d-flex flex-wrap gap-3">
+                @for (dpi of dpiOptions; track dpi) {
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" formControlName="printerDpi" [id]="'dpi-' + dpi" [value]="dpi">
+                    <label class="form-check-label" [for]="'dpi-' + dpi">{{ dpi }} dpi</label>
+                  </div>
+                }
+              </div>
+              <div class="form-text">
+                La Zebra GK420d es de 203 dpi (8 puntos por mm). Se usa para la vista previa y para convertir los mm de las plantillas a puntos.
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6 mb-3">
+              <label for="storeName" class="form-label small fw-semibold">Nombre de la tienda</label>
+              <input
+                type="text"
+                id="storeName"
+                class="form-control"
+                formControlName="storeName"
+                placeholder="Ej. Bazar Enrique"
+                [attr.maxlength]="storeNameMaxLength"
+                [class.is-invalid]="isInvalid('storeName')"
+              >
+              @if (isInvalid('storeName')) {
+                <div class="invalid-feedback">Máximo {{ storeNameMaxLength }} caracteres.</div>
+              }
+              <div class="form-text">Marcador <code ngNonBindable>{{storeName}}</code>. Puede quedar vacío si ninguna plantilla lo usa.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ATRIBUTOS DE TALLA -->
+      <div class="card shadow-sm border-secondary bg-dark-subtle mb-4">
+        <div class="card-body">
+          <h5 class="fw-semibold mb-1"><i class="bi bi-rulers me-2 text-primary"></i>Atributos de talla</h5>
+          <p class="text-secondary small mb-3">
+            El marcador <code ngNonBindable>{{size}}</code> imprime el valor del <strong>primer</strong> atributo de esta lista que tenga cada
+            variante. Ordénalos por prioridad: si una variante tiene "Talla EUR" y "Talla US", sale la que esté más arriba.
+            Para una talla concreta, la plantilla puede usar <code ngNonBindable>{{attr.Talla EUR}}</code>.
+          </p>
+
+          @if (sizeAttributes().length > 0) {
+            <ol class="list-group list-group-numbered mb-3">
+              @for (attribute of sizeAttributes(); track attribute.id; let i = $index, first = $first, last = $last) {
+                <li class="list-group-item bg-transparent border-secondary d-flex align-items-center gap-2">
+                  <span class="flex-grow-1 ms-1">
+                    {{ attribute.name }}
+                    @if (!attribute.available) {
+                      <span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1" title="Al imprimir se ignora">Inactivo</span>
+                    }
+                  </span>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" title="Subir" aria-label="Subir" [disabled]="first" (click)="moveSizeAttribute(i, -1)">
+                    <i class="bi bi-arrow-up"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" title="Bajar" aria-label="Bajar" [disabled]="last" (click)="moveSizeAttribute(i, 1)">
+                    <i class="bi bi-arrow-down"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-danger" title="Quitar" aria-label="Quitar" (click)="removeSizeAttribute(attribute.id)">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </li>
+              }
+            </ol>
+          } @else {
+            <p class="small text-warning mb-3">
+              <i class="bi bi-exclamation-triangle me-1"></i> No hay atributos de talla: <code ngNonBindable>{{size}}</code> se imprimirá vacío.
+            </p>
+          }
+
+          <div class="col-12 col-md-6">
+            <label for="addSize" class="form-label small fw-semibold">Agregar atributo de talla</label>
+            <app-search-select
+              inputId="addSize"
+              [formControl]="addSizeControl"
+              [options]="addSizeOptions()"
+              placeholder="Elegir atributo"
+              searchPlaceholder="Buscar atributo..."
+              emptyText="No hay más atributos habilitados"
+              [loading]="isRefreshingAttributes()"
+              (opened)="refreshAttributes()"
+              (selectionChange)="addSizeAttribute($event)"
+            ></app-search-select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Acciones -->
+      <div class="d-flex flex-column flex-sm-row justify-content-end gap-2 mb-4">
+        <button type="button" class="btn btn-outline-secondary" [disabled]="isSaving() || !hasChanges()" (click)="resetForm()">
+          Descartar cambios
+        </button>
+        <button type="submit" class="btn btn-primary d-flex align-items-center justify-content-center gap-2" [disabled]="isSaving()">
+          @if (isSaving()) {
+            <span class="spinner-border spinner-border-sm" role="status"></span>
+          } @else {
+            <i class="bi bi-check-lg"></i>
+          }
+          Guardar configuración
+        </button>
+      </div>
+    </form>
+  }
+}
