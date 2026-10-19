@@ -150,3 +150,8 @@ export interface UpdateVariantStockRequest {
   stockStore: number;
   stockWarehouse: number;
 }
+
+// Foto que representa a una variante: la suya o, si no tiene, la principal del producto
+export function variantImageUrl(product: Product, variant: ProductVariant): string | null {
+  return variant.imageUrl ?? product.mainImageUrl ?? null;
+}

@@ -41,6 +41,7 @@
       <table class="table table-dark table-hover align-middle mb-0 small">
         <thead>
           <tr>
+            <th scope="col" style="width: 56px;">Foto</th>
             <th scope="col">SKU</th>
             <th scope="col">Combinación</th>
             <th scope="col">
@@ -59,6 +60,15 @@
         <tbody>
           @for (item of items(); track item.variant.id) {
             <tr [class.table-active]="item.quantity > 0">
+              <td>
+                @if (variantImageUrl(item.product, item.variant); as url) {
+                  <img [src]="url" [alt]="item.variant.displayName" class="label-thumb rounded border border-secondary" loading="lazy" appImgFallback>
+                } @else {
+                  <div class="label-thumb rounded border border-secondary bg-black bg-opacity-25 d-flex align-items-center justify-content-center text-secondary">
+                    <i class="bi bi-image"></i>
+                  </div>
+                }
+              </td>
               <td><span class="badge bg-black border border-info text-info font-monospace">{{ item.variant.sku }}</span></td>
               <td>{{ combinationLabel(item.variant) }}</td>
               <td>{{ sizeOf(item.variant) || '—' }}</td>

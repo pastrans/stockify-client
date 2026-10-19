@@ -61,6 +61,7 @@
           <table class="table table-dark table-hover align-middle mb-0 small">
             <thead>
               <tr>
+                <th scope="col" style="width: 56px;">Foto</th>
                 <th scope="col">Producto</th>
                 <th scope="col">SKU</th>
                 <th scope="col">Talla</th>
@@ -71,6 +72,15 @@
             <tbody>
               @for (row of rows(); track row.entry.variantId) {
                 <tr [class.opacity-50]="!row.printable">
+                  <td>
+                    @if (row.product && row.variant && variantImageUrl(row.product, row.variant); as url) {
+                      <img [src]="url" [alt]="row.variant!.displayName" class="label-thumb rounded border border-secondary" loading="lazy" appImgFallback>
+                    } @else {
+                      <div class="label-thumb rounded border border-secondary bg-black bg-opacity-25 d-flex align-items-center justify-content-center text-secondary">
+                        <i class="bi bi-image"></i>
+                      </div>
+                    }
+                  </td>
                   <td>
                     @if (row.product; as product) {
                       <a [routerLink]="['/products', product.id, 'edit']" fragment="labels" class="link-light fw-semibold text-decoration-none">

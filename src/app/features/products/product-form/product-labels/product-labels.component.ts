@@ -2,7 +2,8 @@ import { Component, OnInit, computed, effect, inject, input, signal } from '@ang
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
-import { Product, ProductVariant } from '../../../../shared/models/product.model';
+import { Product, ProductVariant, variantImageUrl } from '../../../../shared/models/product.model';
+import { ImgFallbackDirective } from '../../../../shared/directives/img-fallback.directive';
 import { LabelSettings } from '../../../../shared/models/label-settings.model';
 import { SettingsService } from '../../../../core/services/settings.service';
 import { LabelQueueService } from '../../../../core/services/label-queue.service';
@@ -24,7 +25,7 @@ const toast = Swal.mixin({
 @Component({
   selector: 'app-product-labels',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, LabelJobPanelComponent],
+  imports: [ReactiveFormsModule, RouterLink, ImgFallbackDirective, LabelJobPanelComponent],
   templateUrl: './product-labels.component.html',
   styleUrls: ['./product-labels.component.css']
 })
@@ -70,6 +71,7 @@ export class ProductLabelsComponent implements OnInit {
   // --- CANTIDADES ---
 
   readonly maxQuantity = MAX_LABEL_QUANTITY;
+  readonly variantImageUrl = variantImageUrl;
 
   sizeOf(variant: ProductVariant): string {
     return sizeOf(variant, labelContextFrom(this.settings()).sizeAttributeIds);

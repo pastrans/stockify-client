@@ -3,7 +3,8 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { catchError, forkJoin, map, of } from 'rxjs';
 import Swal from 'sweetalert2';
-import { Product, ProductVariant } from '../../../shared/models/product.model';
+import { Product, ProductVariant, variantImageUrl } from '../../../shared/models/product.model';
+import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 import { LabelSettings } from '../../../shared/models/label-settings.model';
 import { ProductService } from '../../../core/services/product.service';
 import { SettingsService } from '../../../core/services/settings.service';
@@ -28,8 +29,9 @@ interface QueueRow {
 @Component({
   selector: 'app-label-queue',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, LabelJobPanelComponent],
-  templateUrl: './label-queue.component.html'
+  imports: [ReactiveFormsModule, RouterLink, ImgFallbackDirective, LabelJobPanelComponent],
+  templateUrl: './label-queue.component.html',
+  styleUrls: ['./label-queue.component.css']
 })
 export class LabelQueueComponent implements OnInit {
   private readonly queue = inject(LabelQueueService);
@@ -37,6 +39,7 @@ export class LabelQueueComponent implements OnInit {
   private readonly settingsService = inject(SettingsService);
 
   readonly maxQuantity = MAX_LABEL_QUANTITY;
+  readonly variantImageUrl = variantImageUrl;
   readonly entries = this.queue.entries;
 
   products = signal<Map<number, Product | null>>(new Map());

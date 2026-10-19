@@ -1,3 +1,11 @@
 .apply-all {
   width: 150px;
 }
+
+/* Miniatura de la variante en la tabla de etiquetas */
+.label-thumb {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
