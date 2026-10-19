@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 import { LABEL_TOP_RANGE, PrinterError, ZebraDevice, ZebraPrinterService } from '../../../core/services/zebra-printer.service';
 import { LabelaryService } from '../../../core/services/labelary.service';
@@ -29,7 +30,7 @@ const GENERIC_PREVIEW_SIZE_MM = { width: 40, height: 30 };
 @Component({
   selector: 'app-printer-status',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   templateUrl: './printer-status.component.html',
   styles: [
     '.position-input { width: 130px; }',

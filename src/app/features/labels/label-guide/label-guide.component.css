@@ -1,0 +1,19 @@
+.step-number {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+}
+
+.zpl-sample {
+  font-size: 0.8rem;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.example-preview {
+  max-width: 100%;
+  height: auto;
+  background-color: #fff;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
+  image-rendering: pixelated;
+}

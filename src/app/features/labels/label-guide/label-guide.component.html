@@ -1,0 +1,302 @@
+<div class="container mt-4" data-bs-theme="dark">
+  <!-- Encabezado -->
+  <div class="mb-3">
+    <h2 class="fw-bold mb-1">Guías de etiquetas</h2>
+    <p class="text-secondary small mb-0">Cómo dejar lista la impresora Zebra y cómo diseñar las plantillas de etiqueta.</p>
+  </div>
+
+  <ul class="nav nav-tabs border-secondary mb-4" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button type="button" class="nav-link" role="tab" [class.active]="activeTab() === 'printer'" (click)="setTab('printer')">
+        <i class="bi bi-printer me-1"></i> Impresora
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button type="button" class="nav-link" role="tab" [class.active]="activeTab() === 'templates'" (click)="setTab('templates')">
+        <i class="bi bi-file-earmark-code me-1"></i> Plantillas
+      </button>
+    </li>
+  </ul>
+
+  @if (activeTab() === 'printer') {
+    <!-- ===================== IMPRESORA ===================== -->
+
+    <!-- 1. Instalación -->
+    <div class="card shadow-sm border-secondary bg-dark-subtle mb-3">
+      <div class="card-body d-flex gap-3">
+        <span class="step-number rounded-circle bg-primary text-white fw-bold d-flex align-items-center justify-content-center">1</span>
+        <div class="small">
+          <h5 class="fw-semibold mb-2">Instalar la impresora y Browser Print</h5>
+          <ol class="ps-3 mb-0">
+            <li class="mb-1">Instala el driver con <strong>Zebra Setup Utilities</strong> y conecta la Zebra (GK420d) por USB.</li>
+            <li class="mb-1">
+              Instala <strong>Zebra Browser Print</strong>. Es el programa que deja que Stockify envíe etiquetas a la impresora desde el
+              navegador; debe estar abierto (ícono junto al reloj de Windows).
+            </li>
+            <li class="mb-1">En el ícono de Browser Print → <em>Settings</em>, elige la Zebra como impresora <em>Default</em>.</li>
+            <li>
+              La primera vez que Stockify se conecta, Browser Print pregunta si acepta este sitio: pulsa <strong>Yes</strong>.
+              Si alguna vez pregunta por un sitio que no conoces, recházalo.
+            </li>
+          </ol>
+          @if (isHttps) {
+            <div class="alert alert-info small mt-3 mb-0">
+              <i class="bi bi-shield-lock me-1"></i>
+              Stockify usa HTTPS: abre una vez <code>https://localhost:9101/ssl_support</code> en este navegador y acepta el
+              certificado de Browser Print. Sin ese paso, el navegador bloquea la conexión con la impresora.
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Verificar -->
+    <div class="card shadow-sm border-secondary bg-dark-subtle mb-3">
+      <div class="card-body d-flex gap-3">
+        <span class="step-number rounded-circle bg-primary text-white fw-bold d-flex align-items-center justify-content-center">2</span>
+        <div class="small">
+          <h5 class="fw-semibold mb-2">Verificar la conexión</h5>
+          <p class="mb-2">
+            En la pestaña <strong>Etiquetas</strong> de un producto o en la <a routerLink="/labels/queue">Cola de impresión</a> está el
+            recuadro de la impresora:
+          </p>
+          <ul class="ps-3 mb-0">
+            <li class="mb-1"><strong>Verificar impresora</strong>: comprueba que responde y que tiene papel, el cabezal cerrado y no está en pausa.</li>
+            <li><strong>Imprimir prueba</strong>: imprime una etiqueta de la plantilla elegida (o una genérica si no hay plantilla).</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Calibrar -->
+    <div class="card shadow-sm border-secondary bg-dark-subtle mb-3">
+      <div class="card-body d-flex gap-3">
+        <span class="step-number rounded-circle bg-primary text-white fw-bold d-flex align-items-center justify-content-center">3</span>
+        <div class="small">
+          <h5 class="fw-semibold mb-2">Calibrar el rollo</h5>
+          <p class="mb-2">
+            La impresora tiene que medir dónde empieza cada etiqueta. Hazlo <strong>cada vez que cambies de rollo o de tamaño de etiqueta</strong>:
+          </p>
+          <ul class="ps-3 mb-2">
+            <li class="mb-1">Desde Stockify: botón <strong>Calibrar</strong> del recuadro de la impresora (envía <code>~JC</code>).</li>
+            <li>En la impresora: con ella encendida, mantén pulsado el botón de avance hasta que la luz parpadee <strong>dos veces</strong> y suéltalo.</li>
+          </ul>
+          <p class="text-secondary mb-0">La impresora avanza algunas etiquetas en blanco mientras mide: es normal.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Posición -->
+    <div class="card shadow-sm border-secondary bg-dark-subtle mb-3">
+      <div class="card-body d-flex gap-3">
+        <span class="step-number rounded-circle bg-primary text-white fw-bold d-flex align-items-center justify-content-center">4</span>
+        <div class="small">
+          <h5 class="fw-semibold mb-2">Ajustar la posición (margen superior)</h5>
+          <p class="mb-2">
+            Si después de calibrar la impresión sale <strong>corrida hacia arriba</strong> (no se ve la primera línea, como el nombre del
+            producto) o hacia abajo, usa el botón <strong>Posición</strong> del recuadro de la impresora:
+          </p>
+          <ol class="ps-3 mb-2">
+            <li class="mb-1">Compara la etiqueta impresa con la imagen <strong>"Así debe salir"</strong>.</li>
+            <li class="mb-1">Si sale más arriba o se corta, aumenta el margen; si sale más abajo, redúcelo (de 0.5 en 0.5 mm).</li>
+            <li>Pulsa <strong>Guardar y probar</strong> hasta que coincida.</li>
+          </ol>
+          <p class="text-secondary mb-0">
+            El margen se guarda en la impresora y vale para todas las plantillas. Con la Zebra GK420d y el rollo de 40 × 30 mm hizo
+            falta <strong>+4 mm</strong>.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Ajustes de calidad -->
+    <div class="card shadow-sm border-secondary bg-dark-subtle mb-3">
+      <div class="card-body d-flex gap-3">
+        <span class="step-number rounded-circle bg-primary text-white fw-bold d-flex align-items-center justify-content-center">5</span>
+        <div class="small">
+          <h5 class="fw-semibold mb-2">Oscuridad y velocidad (una sola vez)</h5>
+          <p class="mb-0">
+            Si la impresión sale muy clara o muy oscura, ajusta la <strong>oscuridad</strong> y la <strong>velocidad</strong> con Zebra
+            Setup Utilities (<em>Configure Printer Settings</em>). Se guardan en la impresora: las plantillas no deben traer esos
+            ajustes (ver la guía de plantillas sobre <code>^JUS</code>).
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Problemas frecuentes -->
+    <div class="card shadow-sm border-danger-subtle bg-dark-subtle mb-4">
+      <div class="card-body">
+        <h5 class="fw-semibold mb-3"><i class="bi bi-bug me-2 text-danger"></i>Problemas frecuentes</h5>
+        <dl class="small mb-0">
+          <dt>"No se pudo conectar con Zebra Browser Print"</dt>
+          <dd class="text-secondary mb-3">
+            Browser Print no está abierto o no aceptaste este sitio. Ábrelo desde el menú Inicio y vuelve a pulsar Verificar impresora.
+          </dd>
+          <dt>La luz de la impresora no está verde fija</dt>
+          <dd class="text-secondary mb-3">
+            Roja o parpadeando: falta papel o el cabezal está abierto. Revisa el rollo, cierra la tapa hasta que haga clic y pulsa el
+            botón de avance.
+          </dd>
+          <dt>Un trabajo se quedó atascado o se imprime solo</dt>
+          <dd class="text-secondary mb-3">
+            Clic derecho en el ícono de Browser Print → <em>Exit</em>, vuelve a abrirlo, y apaga y enciende la impresora para vaciar
+            su memoria.
+          </dd>
+          <dt>Las etiquetas salen desplazadas o cortadas</dt>
+          <dd class="text-secondary mb-3">Calibra (paso 3) y, si sigue igual, ajusta la posición (paso 4).</dd>
+          <dt>Sale una etiqueta en blanco entre cada impresión</dt>
+          <dd class="text-secondary mb-3">
+            La impresora no detecta la separación entre etiquetas: calibra. Si persiste, revisa en Zebra Setup Utilities que el tipo de
+            medio sea <em>Gap/Notch</em> (etiquetas con separación).
+          </dd>
+          <dt>El QR no se lee</dt>
+          <dd class="text-secondary mb-0">
+            Sube la oscuridad (paso 5) o usa una plantilla con el QR más grande (p. ej. "QR grande 40x30").
+          </dd>
+        </dl>
+      </div>
+    </div>
+  } @else {
+    <!-- ===================== PLANTILLAS ===================== -->
+
+    <!-- Cómo se crea -->
+    <div class="card shadow-sm border-secondary bg-dark-subtle mb-3">
+      <div class="card-body small">
+        <h5 class="fw-semibold mb-2"><i class="bi bi-pencil-square me-2 text-primary"></i>Cómo crear una plantilla</h5>
+        <ol class="ps-3 mb-0">
+          <li class="mb-1">
+            Diseña la etiqueta con <strong>ZebraDesigner 3</strong> (o escribe el ZPL a mano) y pruébala en el visor de
+            <strong>Labelary</strong> (<code>labelary.com/viewer.html</code>, a 8 dpmm).
+          </li>
+          <li class="mb-1">
+            En Stockify, <a routerLink="/labels/templates/new">crea una plantilla</a>, pega el ZPL y cambia los datos de ejemplo por
+            <strong>marcadores</strong> (abajo). El editor muestra la vista previa y avisa de los errores.
+          </li>
+          <li>Imprime una etiqueta de prueba desde un producto antes de usarla en serio.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Medidas -->
+    <div class="card shadow-sm border-secondary bg-dark-subtle mb-3">
+      <div class="card-body small">
+        <h5 class="fw-semibold mb-2"><i class="bi bi-rulers me-2 text-primary"></i>Medidas: puntos y milímetros</h5>
+        <p class="mb-2">
+          ZPL mide en <strong>puntos</strong> de la impresora. A 203 dpi (Zebra GK420d), <strong>8 puntos = 1 mm</strong>.
+        </p>
+        <ul class="ps-3 mb-0">
+          <li class="mb-1"><code>^PW</code> es el ancho y <code>^LL</code> el alto de la etiqueta: 40 × 30 mm son <code>^PW320 ^LL240</code>; 50 × 50 mm, <code>^PW400 ^LL400</code>.</li>
+          <li class="mb-1"><code>^FOx,y</code> coloca cada elemento: x hacia la derecha, y hacia abajo, desde la esquina superior izquierda.</li>
+          <li>El editor propone el tamaño en mm a partir de <code>^PW</code> y <code>^LL</code>.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Marcadores -->
+    <div class="card shadow-sm border-secondary bg-dark-subtle mb-3">
+      <div class="card-body small">
+        <h5 class="fw-semibold mb-2"><i class="bi bi-braces me-2 text-primary"></i>Marcadores</h5>
+        <p class="mb-2">
+          Se escriben dentro de <code>^FD … ^FS</code> y se cambian por los datos de cada variante al imprimir. Para recortar un valor,
+          añade <code ngNonBindable>:N</code>: <code ngNonBindable>{{name:12}}</code> imprime como mucho 12 caracteres.
+        </p>
+        <div class="table-responsive">
+          <table class="table table-dark table-sm align-middle mb-2">
+            <thead>
+              <tr><th>Marcador</th><th>Valor</th><th>Ejemplo</th></tr>
+            </thead>
+            <tbody>
+              @for (help of placeholderHelp; track help.placeholder) {
+                <tr>
+                  <td><code class="text-info">{{ help.placeholder }}</code></td>
+                  <td>{{ help.description }}</td>
+                  <td class="text-secondary">{{ help.example }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <ul class="ps-3 mb-0">
+          <li class="mb-1">
+            <code ngNonBindable>{{priceCode}}</code>: el precio sin punto, con 4 dígitos (11.25 → 1125, 2.5 → 0250). Con precios de 100 o
+            más salen 5 dígitos y Stockify avisa antes de imprimir.
+          </li>
+          <li class="mb-1">
+            <code ngNonBindable>{{size}}</code>: el primer atributo de talla, en el orden de
+            <a routerLink="/settings" [queryParams]="{ tab: 'labels' }">Configuración → Etiquetas</a>, que tenga la variante.
+          </li>
+          <li>Un marcador mal escrito o de un atributo que no existe no deja guardar la plantilla.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Códigos -->
+    <div class="card shadow-sm border-secondary bg-dark-subtle mb-3">
+      <div class="card-body small">
+        <h5 class="fw-semibold mb-2"><i class="bi bi-qr-code me-2 text-primary"></i>QR y código de barras</h5>
+        <pre class="zpl-sample bg-black rounded p-2 mb-2" ngNonBindable>^FO10,94^BQN,2,8^FDQA,{{qr}}^FS        QR con el SKU, 8 puntos por módulo
+^FO10,300^BCN,60,Y,N,N^FD{{barcode}}^FS  Código de barras (Code 128)</pre>
+        <ul class="ps-3 mb-0">
+          <li class="mb-1">El QR codifica el <strong>SKU</strong>: en Odoo es la referencia interna, que el PdV permite buscar.</li>
+          <li class="mb-1">
+            El último número de <code>^BQN,2,N</code> es el tamaño de cada cuadrito. Con SKU de hasta 29 caracteres, el QR mide 25 × 25
+            cuadritos: a 8 son 200 puntos (25 mm), a 6 son 150 (19 mm), a 5 son 125 (16 mm).
+          </li>
+          <li>Deja libre alrededor del QR al menos el ancho de un cuadrito: si lo pegas a otro elemento, puede no leerse.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Buenas prácticas -->
+    <div class="card shadow-sm border-warning-subtle bg-dark-subtle mb-3">
+      <div class="card-body small">
+        <h5 class="fw-semibold mb-2"><i class="bi bi-lightbulb me-2 text-warning"></i>Buenas prácticas</h5>
+        <ul class="ps-3 mb-0">
+          <li class="mb-1">Empieza la etiqueta con <code>^CI28</code> (UTF-8) para que salgan los acentos y la ñ.</li>
+          <li class="mb-1">
+            Quita el bloque de configuración que agrega ZebraDesigner (<code>~SD</code>, <code>^PR</code>, <code>^JUS</code>…):
+            <code>^JUS</code> guarda la configuración en la impresora en cada impresión. La oscuridad, la velocidad y la posición se
+            ajustan una sola vez en la impresora.
+          </li>
+          <li class="mb-1">
+            Usa una sola etiqueta (<code>^XA … ^XZ</code>) por plantilla. No hace falta <code>^PQ</code>: Stockify pone las copias.
+          </li>
+          <li>
+            Fotos: ZPL solo imprime en blanco y negro, así que una foto de producto no se reconoce. Un logotipo simple sí se puede, pero
+            por ahora Stockify no lo admite.
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Ejemplos -->
+    <div class="card shadow-sm border-secondary bg-dark-subtle mb-4">
+      <div class="card-body small">
+        <h5 class="fw-semibold mb-3"><i class="bi bi-collection me-2 text-primary"></i>Plantillas de ejemplo</h5>
+        @if (examples().length === 0) {
+          <p class="text-secondary mb-0">No hay plantillas habilitadas.</p>
+        } @else {
+          <div class="row g-3">
+            @for (example of examples(); track example.template.id) {
+              <div class="col-12 col-md-6 col-xl-4">
+                <div class="border border-secondary rounded p-3 h-100 d-flex flex-column">
+                  <div class="fw-semibold">{{ example.template.name }}</div>
+                  <div class="text-secondary mb-2">{{ example.template.widthMm }} × {{ example.template.heightMm }} mm</div>
+                  <div class="flex-grow-1 d-flex align-items-center justify-content-center mb-2">
+                    @if (example.previewUrl; as url) {
+                      <img [src]="url" [alt]="'Vista previa de ' + example.template.name" class="example-preview" [style.width.px]="example.template.widthMm * 4">
+                    } @else {
+                      <span class="text-secondary"><span class="spinner-border spinner-border-sm me-1" role="status"></span> Vista previa...</span>
+                    }
+                  </div>
+                  <a [routerLink]="['/labels/templates', example.template.id, 'edit']" class="btn btn-sm btn-outline-secondary">Ver el ZPL</a>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

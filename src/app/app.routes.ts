@@ -85,6 +85,10 @@ export const routes: Routes = [
             loadComponent: () => import('./features/labels/label-templates/label-templates.component').then(m => m.LabelTemplatesComponent)
           },
           {
+            path: 'guide',
+            loadComponent: () => import('./features/labels/label-guide/label-guide.component').then(m => m.LabelGuideComponent)
+          },
+          {
             path: 'templates/new',
             loadComponent: () => import('./features/labels/label-template-form/label-template-form.component').then(m => m.LabelTemplateFormComponent)
           },

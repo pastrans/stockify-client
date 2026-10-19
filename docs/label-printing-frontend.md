@@ -238,9 +238,10 @@ Un 400 de plantilla puede juntar varios problemas de marcadores separados por `;
 
 Contenido estático (sin endpoint), en `/labels/guide` con dos secciones, enlazada desde el menú "Etiquetas", desde `app-printer-status` y desde el editor de plantillas. Contenido mínimo en §10 de los requerimientos:
 
-- [ ] **Impresora:** Zebra Setup Utilities, calibración (`~JC` o botón de avance), oscuridad y velocidad una sola vez, Browser Print como *Default*, HTTPS (`https://localhost:9101/ssl_support` y *accepted hosts*), "Verificar impresora" y problemas frecuentes (luz, cola atascada, etiquetas desplazadas, etiqueta en blanco entre impresiones).
-- [ ] **Plantillas:** ZebraDesigner 3 o ZPL a mano con el visor de Labelary, puntos y mm (8 puntos = 1 mm a 203 dpi), `^CI28`, catálogo de marcadores con ejemplos, QR (`^BQN,2,N^FDQA,{{qr}}^FS`) y límite de tamaño según el largo del SKU, precio oculto y talla, y por qué quitar `^JUS`.
-- [ ] Las tres plantillas semilla como ejemplo, con su vista previa.
+- [x] **Impresora:** Zebra Setup Utilities, calibración (`~JC` o botón de avance), oscuridad y velocidad una sola vez, Browser Print como *Default*, HTTPS (`https://localhost:9101/ssl_support` y *accepted hosts*), "Verificar impresora" y problemas frecuentes (luz, cola atascada, etiquetas desplazadas, etiqueta en blanco entre impresiones).
+- [x] **Plantillas:** ZebraDesigner 3 o ZPL a mano con el visor de Labelary, puntos y mm (8 puntos = 1 mm a 203 dpi), `^CI28`, catálogo de marcadores con ejemplos, QR (`^BQN,2,N^FDQA,{{qr}}^FS`) y límite de tamaño según el largo del SKU, precio oculto y talla, y por qué quitar `^JUS`.
+- [x] Las tres plantillas semilla como ejemplo, con su vista previa. *Se muestran las plantillas habilitadas (hasta 6), con datos de ejemplo.*
+- [x] *Además:* calibración y ajuste de posición (con el +4 mm de la GK420d), y por qué no conviene imprimir fotos en ZPL (solo blanco y negro; un logotipo sí sería viable).
 
 **Hecho cuando:** las guías son accesibles desde el menú, la impresora y el editor.
 

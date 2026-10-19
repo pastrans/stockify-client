@@ -100,7 +100,7 @@
               {{ testLabel() ? '(fíjate en el nombre y en el QR)' : '(la línea de arriba debe verse entera)' }}.
             </li>
             <li class="mb-1">Si sale <strong>más arriba</strong> o se corta, aumenta el margen; si sale <strong>más abajo</strong>, redúcelo.</li>
-            <li>Ajusta de 0.5 en 0.5 mm hasta que coincida.</li>
+            <li>Ajusta de 0.5 en 0.5 mm hasta que coincida (<a routerLink="/labels/guide">más detalles en la guía</a>).</li>
           </ol>
         </div>
         @if (isReadingPosition()) {
@@ -153,6 +153,7 @@
     @if (connectionError(); as error) {
       <div class="alert alert-warning small mt-3 mb-0" role="alert">
         <i class="bi bi-exclamation-triangle me-1"></i> {{ error }}
+        <a routerLink="/labels/guide" class="alert-link ms-1">Ver la guía</a>
       </div>
     }
 
@@ -187,6 +188,7 @@
           <li>¿Zebra Browser Print está abierto (ícono junto al reloj de Windows)?</li>
           <li>Si un trabajo quedó atascado: clic derecho en el ícono de Browser Print → Exit, y vuelve a abrirlo.</li>
         </ul>
+        <a routerLink="/labels/guide" class="alert-link d-inline-block mt-2"><i class="bi bi-journal-text me-1"></i>Ver la guía de la impresora</a>
       </div>
     }
   </div>
