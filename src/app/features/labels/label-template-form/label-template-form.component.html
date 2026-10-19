@@ -72,6 +72,17 @@
         <button type="button" class="btn-close" (click)="errorMessage.set(null)" aria-label="Close"></button>
       </div>
     }
+    @if (errorList().length > 0) {
+      <div class="alert alert-danger alert-dismissible fade show small" role="alert">
+        <div class="fw-semibold mb-1"><i class="bi bi-exclamation-octagon me-1"></i> No se pudo guardar la plantilla:</div>
+        <ul class="mb-0 ps-3">
+          @for (problem of errorList(); track problem) {
+            <li>{{ problem }}</li>
+          }
+        </ul>
+        <button type="button" class="btn-close" (click)="errorList.set([])" aria-label="Close"></button>
+      </div>
+    }
 
     <div class="row g-4">
       <!-- FORMULARIO -->

@@ -1,6 +1,6 @@
 # Stockify Client
 
-SPA en Angular para **Stockify**: digitalización de inventario retail (catálogo matricial de variantes con existencias por variante en Tienda/Bodega) con exportación a **Odoo 19** mediante archivos `.xlsx` que se importan a mano. Corresponde a la Épica EP08 del backlog (`Stockify_Backlog_Ingenieria.pdf`).
+SPA en Angular para **Stockify**: digitalización de inventario retail (catálogo matricial de variantes con existencias por variante en Tienda/Bodega) con exportación a **Odoo 19** mediante archivos `.xlsx` que se importan a mano e impresión de etiquetas (QR) en una **Zebra** con Zebra Browser Print. Corresponde a la Épica EP08 del backlog (`Stockify_Backlog_Ingenieria.pdf`).
 
 - Backend: repositorio hermano `../Stockify-API` (Node + Express, Clean Architecture en 4 capas, Prisma 7 + PostgreSQL, `exactOptionalPropertyTypes: true`). El esquema de referencia está en `../Stockify-API/prisma/schema.prisma`.
 
@@ -21,7 +21,15 @@ SPA en Angular para **Stockify**: digitalización de inventario retail (catálog
 - Cada listado usa pestañas de estado (Todos / Habilitados / Inhabilitados) con el parámetro `available`. La tarjeta de filtros es `app-list-filters` (pestañas, campos propios proyectados y "Limpiar filtros"), con `app-search-input` para el buscador y `toAvailableParam()` (`shared/models/list-filter.model.ts`) para el parámetro. No se añaden buscadores de texto que no soporte la API.
 - La eliminación es suave (soft-delete): el registro queda con `available: false`.
 - Los textos de la UI van en español.
+- `/settings` tiene dos pestañas en `?tab=`: Exportación a Odoo (sin parámetro) y Etiquetas (`?tab=labels`). Se enlazan desde los menús "Odoo" y "Etiquetas"; los enlaces a `/settings` usan `queryParams` exactos en `routerLinkActiveOptions` para no resaltar los dos menús.
 - Menú "Odoo" (desplegable del `main-layout`): `/settings` (configuración de exportación) y `/odoo-guide` (guía estática de importación). Las acciones de Odoo de un producto (exportar, marcar sincronizado, quitar sincronización) viven en `features/products/product-odoo-actions.service.ts` y las usan el formulario y el menú ⚙ del listado.
+- Menú "Etiquetas": `/labels/queue` (cola de impresión, con contador), `/labels/templates` (plantillas y editor), `/settings?tab=labels` y `/labels/guide` (guías de impresora y plantillas, `?tab=templates`). El producto tiene además la pestaña **Etiquetas** (fragmento `#labels`).
+- Impresión de etiquetas (plan en `docs/label-printing-frontend.md`):
+  - `shared/utils/zpl/`: motor de plantillas **puro** (sin Angular, se prueba con Node): catálogo de marcadores, `renderLabel`, `buildPrintJob`, `splitTemplate` (configuración / etiqueta), `setQuantity` (`^PQ`), `priceCode`, `sizeOf`, `templateWarnings`, `sizeFromZpl`, `sampleLabelItem` y los intérpretes de `~HS` y `^HH`.
+  - `core/services/`: `label-template.service.ts`, `label-queue.service.ts` (cola en `localStorage`, solo ids y cantidades), `labelary.service.ts` (vista previa) y `zebra-printer.service.ts` (Browser Print: impresoras, estado, envío, margen superior).
+  - `features/labels/`: `label-print-flow.service.ts` (avisos → verificar impresora → etiqueta de prueba → resto, y descarga `.zpl`), `label-job-panel` (impresora, plantilla, vista previa, Imprimir/Descargar; lo usan la pestaña del producto y la cola), listado y editor de plantillas, cola y guías.
+  - `shared/components/printer-status`: elegir la impresora, Verificar, Imprimir prueba, Calibrar (`~JC`) y Posición (`^LT`). Con `[testLabel]` prueba con la etiqueta real y la muestra como "Así debe salir".
+  - Labelary y Browser Print se llaman con **`fetch`, nunca con `HttpClient`**: el `authInterceptor` enviaría el JWT a un servicio externo y un 401 de ellos cerraría la sesión. Labelary exige `application/x-www-form-urlencoded` (rechaza `text/plain`); Browser Print, `text/plain`.
 
 ## API (`/api/v1`)
 
@@ -34,6 +42,8 @@ SPA en Angular para **Stockify**: digitalización de inventario retail (catálog
 | `products` | CRUD de plantillas; paginado con `page`, `limit`, `available`, `search`, `status` y `posCategoryId`; `PATCH /sync` (`productIds`) → `{ updatedCount, syncedIds }`; `PATCH /sync-exported` (`{ exportedAt }`) → además `skippedIds`; `PATCH /:id/unsync` (si vuelve a `draft`, la respuesta trae `warning`); variantes: `PUT/DELETE /variants/:variantId`, `PATCH /variants/:variantId/stock` |
 | `settings` | `GET /export` (valores por defecto con `updatedAt: null` si nunca se guardaron), `PUT /export` (campos parciales) |
 | `exports` | `POST /full` (activos no sincronizados) y `POST /products/:id` → `.zip` binario con las cabeceras `Content-Disposition` (nombre) y `X-Export-Generated-At` (hora, para `sync-exported`), expuestas por CORS |
+| `settings/labels` | `GET` (`printerDpi`, `storeName`, `sizeAttributeIds` ordenados, `sizeAttributes` con `available`, `updatedAt: null` si nunca se guardaron), `PUT` (parcial) |
+| `label-templates` | CRUD con soft-delete; paginado con `page`, `limit`, `available` y `search` (nombre). La API valida los marcadores al guardar |
 | `uploads` | `POST /image` (multipart, campo `file`; JPG/PNG/WebP ≤ 5 MB) → `{ uploadId, key, status: 'processing' }`; `GET /:uploadId` → `processing`, `ready` (con `previewUrl`, válida 15 min) o `failed` (con `error`) |
 
 Los errores llegan como `{ error: string }` (mensaje en inglés), con 400 para las reglas de negocio. Se leen con `getApiErrorMessage(err, fallback)` (`shared/utils/api-error.ts`), que también acepta `{ message }` y traduce al español los mensajes de negocio conocidos. Los mensajes nuevos que necesiten traducción se añaden ahí. Las validaciones de la exportación llegan en un solo 400 separadas por `; ` y cada una empieza con el nombre de su hoja (`Products: …`): `getApiErrorList` las separa y traduce, y `showApiErrorAlert` las muestra como lista. Con `responseType: 'blob'` el cuerpo del error también es un `Blob`: `parseBlobError()` lo convierte en JSON antes de leerlo.
@@ -80,7 +90,15 @@ Imágenes de producto y variante: se suben primero a `uploads` y el formulario e
   - Dos productos con el mismo nombre no se pueden exportar (Odoo asigna las variantes por nombre).
   - `externalIdPrefix` no se puede cambiar si hay algún producto `synced` (activo o no): la pantalla de configuración deshabilita el campo.
 
+- **Etiquetas** (requerimientos en `../Stockify-API/docs/label-printing-requirements.md`):
+  - Una plantilla es ZPL con marcadores `{{name}}`, `{{displayName}}`, `{{sku}}`, `{{qr}}` (= SKU), `{{barcode}}`, `{{salePrice}}`, `{{priceCode}}`, `{{size}}`, `{{attr.<Atributo>}}` y `{{storeName}}`, con recorte opcional `{{name:12}}`. El catálogo existe en el cliente y en la API (`domain/services/labels/label-placeholders.ts`): si se añade uno, va en los dos.
+  - La etiqueta es el **último** `^XA … ^XZ`; los bloques anteriores son configuración y se envían una vez por trabajo. Los valores se insertan sin `^` ni `~`.
+  - `{{priceCode}}`: precio sin punto con 4 dígitos (11.25 → 1125, 2.5 → 0250); con precio ≥ 100 salen 5 y se avisa. `{{size}}`: el primer atributo de talla activo (en el orden de los ajustes) que tenga la variante.
+  - Las cantidades empiezan en 0 y no se comparan con las existencias. Un trabajo usa una sola plantilla. Con más de una etiqueta se imprime antes **una de prueba** (Salió bien / Reimprimir prueba / Cancelar).
+  - Un producto no `synced` se avisa (aviso fijo y confirmación), sin bloquear: si cambian sus atributos o su prefijo, cambia el SKU del QR.
+  - La oscuridad, la velocidad, la calibración y el margen superior (`^LT` + `^JUS`) se guardan en la impresora, no en las plantillas. Con la GK420d y el rollo de 40 × 30 mm hizo falta +4 mm.
+
 ## Estado del proyecto
 
-Hecho: base de la SPA, autenticación (login/reset), layout en dark mode, gestión de usuarios, categorías POS, atributos con sus valores, plantillas de producto con matriz de variantes y existencias por variante, subida de imágenes (archivo o cámara, con fotos por color) y exportación a Odoo (configuración, exportación total y por producto, sincronización y guía de importación). El plan del frontend de la exportación está en `docs/odoo-export-frontend.md`.
-El conteo físico no forma parte de Stockify: se registran las existencias en cada producto y los recuentos posteriores se hacen en Odoo. Fuera de esta versión: exportación "Delta" (D-02) y sincronización en lote desde el listado.
+Hecho: base de la SPA, autenticación (login/reset), layout en dark mode, gestión de usuarios, categorías POS, atributos con sus valores, plantillas de producto con matriz de variantes y existencias por variante, subida de imágenes (archivo o cámara, con fotos por color) exportación a Odoo (configuración, exportación total y por producto, sincronización y guía de importación) e impresión de etiquetas (ajustes, plantillas con vista previa, pestaña del producto, cola, conexión con la Zebra y guías). Los planes del frontend están en `docs/odoo-export-frontend.md` y `docs/label-printing-frontend.md`.
+El conteo físico no forma parte de Stockify: se registran las existencias en cada producto y los recuentos posteriores se hacen en Odoo. Fuera de esta versión: exportación "Delta" (D-02), sincronización en lote desde el listado y logotipos en las etiquetas (`~DG`/`^XG`; las fotos no sirven en ZPL, que solo imprime en blanco y negro).

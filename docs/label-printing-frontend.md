@@ -1,6 +1,6 @@
 # Impresión de etiquetas: trabajo pendiente en el frontend
 
-**Estado:** listo para empezar · **Fecha:** 2026-10-18
+**Estado:** terminado · **Fecha:** 2026-10-18
 **Backend:** terminado en `../Stockify-API` (commit `b08b8bc`). Requerimientos completos, decisiones y plantillas semilla en `../Stockify-API/docs/label-printing-requirements.md`; las referencias `RF-xx` y `D-xx` de este documento remiten a él.
 **Referencia:** `../Bazar-angular` (servicio de Browser Print, flujo de prueba y verificación de la impresora).
 
@@ -247,8 +247,8 @@ Contenido estático (sin endpoint), en `/labels/guide` con dos secciones, enlaza
 
 ## US-L8 · Mensajes de error traducidos y `CLAUDE.md`
 
-- [ ] Traducciones de la tabla "Mensajes de error nuevos" en `shared/utils/api-error.ts`; los problemas de marcadores separados por `; ` se muestran como lista.
-- [ ] `CLAUDE.md` del cliente: tabla de API (`settings/labels`, `label-templates`), menú "Etiquetas", servicios y utilidades nuevas (`zebra-printer`, `label-queue`, `shared/utils/zpl`), reglas (cantidades desde 0, una plantilla por trabajo, prueba previa, aviso de no sincronizado) y estado del proyecto.
+- [x] Traducciones de la tabla "Mensajes de error nuevos" en `shared/utils/api-error.ts`; los problemas de marcadores separados por `; ` se muestran como lista.
+- [x] `CLAUDE.md` del cliente: tabla de API (`settings/labels`, `label-templates`), menú "Etiquetas", servicios y utilidades nuevas (`zebra-printer`, `label-queue`, `shared/utils/zpl`), reglas (cantidades desde 0, una plantilla por trabajo, prueba previa, aviso de no sincronizado) y estado del proyecto.
 
 **Hecho cuando:** ningún error de etiquetas se muestra en inglés y el `CLAUDE.md` describe la funcionalidad.
 

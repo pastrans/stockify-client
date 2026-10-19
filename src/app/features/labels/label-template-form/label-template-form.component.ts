@@ -13,7 +13,7 @@ import { SettingsService } from '../../../core/services/settings.service';
 import { AttributeService } from '../../../core/services/attribute.service';
 import { ProductService } from '../../../core/services/product.service';
 import { LabelaryService } from '../../../core/services/labelary.service';
-import { getApiErrorMessage } from '../../../shared/utils/api-error';
+import { getApiErrorList, getApiErrorMessage } from '../../../shared/utils/api-error';
 import { AppValidators } from '../../../shared/utils/app-validators';
 import { SearchSelectComponent } from '../../../shared/components/search-select/search-select.component';
 import {
@@ -75,6 +75,8 @@ export class LabelTemplateFormComponent implements OnInit, OnDestroy {
   isSaving = signal<boolean>(false);
   notFound = signal<boolean>(false);
   errorMessage = signal<string | null>(null);
+  // Un 400 de la plantilla puede traer varios problemas de marcadores
+  errorList = signal<string[]>([]);
 
   isEditMode = computed(() => this.template() !== null);
   dpi = computed(() => this.settings()?.printerDpi ?? 203);
@@ -363,6 +365,7 @@ export class LabelTemplateFormComponent implements OnInit, OnDestroy {
 
     this.isSaving.set(true);
     this.errorMessage.set(null);
+    this.errorList.set([]);
 
     const current = this.template();
     const request = current
@@ -381,7 +384,9 @@ export class LabelTemplateFormComponent implements OnInit, OnDestroy {
         }
       },
       error: (err) => {
-        this.errorMessage.set(getApiErrorMessage(err, current ? 'Error al actualizar la plantilla.' : 'Error al crear la plantilla.'));
+        const problems = getApiErrorList(err, current ? 'Error al actualizar la plantilla.' : 'Error al crear la plantilla.');
+        if (problems.length > 1) this.errorList.set(problems);
+        else this.errorMessage.set(problems[0]);
         this.isSaving.set(false);
       }
     });

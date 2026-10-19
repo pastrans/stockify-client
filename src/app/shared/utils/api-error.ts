@@ -17,8 +17,14 @@ const EXPORT_SHEETS: Record<string, string> = {
   'Existencias': 'Existencias'
 };
 
-// Los problemas de la exportación empiezan con el nombre de su hoja ("Products: …")
-const EXPORT_PROBLEM_SEPARATOR = new RegExp(`; (?=(?:${Object.keys(EXPORT_SHEETS).join('|')}): )`);
+// Inicio de cada problema que la API junta con "; " en un solo 400: los de la exportación empiezan
+// con el nombre de su hoja ("Products: …") y los de una plantilla de etiqueta, con el tipo de problema
+const LABEL_TEMPLATE_PROBLEMS = ['Unknown placeholder', 'Invalid length in placeholder', 'Missing attribute name', 'Malformed placeholder'];
+const PROBLEM_SEPARATOR = new RegExp(
+  `; (?=(?:${Object.keys(EXPORT_SHEETS).join('|')}): |(?:${LABEL_TEMPLATE_PROBLEMS.join('|')}))`
+);
+
+const TEMPLATE_SIZE_FIELDS: Record<string, string> = { widthMm: 'El ancho', heightMm: 'El alto' };
 
 // Campo del mensaje "X cannot contain …" de la API, en español
 function separatorFieldLabel(match: RegExpMatchArray): string {
@@ -168,6 +174,97 @@ const FRIENDLY_MESSAGES: { pattern: RegExp; translate: (match: RegExpMatchArray)
     pattern: /At least one setting must be provided/i,
     translate: () => 'No hay cambios que guardar en la configuración.'
   },
+  // --- Etiquetas: ajustes ---
+  {
+    pattern: /printerDpi must be one of/i,
+    translate: () => 'La resolución de la impresora debe ser de 203, 300 o 600 dpi.'
+  },
+  {
+    pattern: /^storeName must be a string$/i,
+    translate: () => 'El nombre de la tienda debe ser un texto.'
+  },
+  {
+    pattern: /^storeName cannot be longer than (\d+) characters$/i,
+    translate: (match) => `El nombre de la tienda admite como máximo ${match[1]} caracteres.`
+  },
+  {
+    pattern: /sizeAttributeIds must be an array of positive integers/i,
+    translate: () => 'La lista de atributos de talla no es válida. Recarga la página e inténtalo de nuevo.'
+  },
+  {
+    pattern: /sizeAttributeIds cannot contain duplicates/i,
+    translate: () => 'Hay un atributo de talla repetido en la lista.'
+  },
+  // --- Etiquetas: plantillas ---
+  // Va antes que "Attribute(s) not found" (ajustes de talla), que es más general
+  {
+    pattern: /^Attribute\(s\) not found in placeholders: (.+)$/i,
+    translate: (match) => `No existe el atributo ${match[1]}. Revisa el nombre en los marcadores {{attr.…}} (mayúsculas y espacios incluidos).`
+  },
+  {
+    pattern: /^Attribute\(s\) not found: (.+)$/i,
+    translate: (match) => `Uno de los atributos de talla ya no existe (id ${match[1]}). Recarga la página.`
+  },
+  {
+    pattern: /^Unknown placeholder\(s\): (.+?) \(allowed:/i,
+    translate: (match) => `Marcadores desconocidos: ${match[1]}. Usa los del panel de marcadores.`
+  },
+  {
+    pattern: /^Invalid length in placeholder\(s\): (.+?) \(use/i,
+    translate: (match) => `Recorte no válido en ${match[1]}: usa {{marcador:N}} con N mayor que 0.`
+  },
+  {
+    pattern: /^Missing attribute name in placeholder\(s\): (.+)$/i,
+    translate: (match) => `Falta el nombre del atributo en ${match[1]} (p. ej. {{attr.Color}}).`
+  },
+  {
+    pattern: /^Malformed placeholder/i,
+    translate: () => 'Hay un marcador sin cerrar: cada "{{" debe cerrarse con "}}".'
+  },
+  {
+    pattern: /A label template with this name already exists/i,
+    translate: () => 'Ya existe una plantilla con ese nombre.'
+  },
+  {
+    pattern: /^Label template with id \d+ not found$/i,
+    translate: () => 'La plantilla no existe.'
+  },
+  {
+    pattern: /^(widthMm|heightMm) must be a number greater than 0 and up to (\d+)$/i,
+    translate: (match) => `${TEMPLATE_SIZE_FIELDS[match[1]] ?? match[1]} debe ser mayor que 0 y de hasta ${match[2]} mm.`
+  },
+  {
+    pattern: /^(widthMm|heightMm) can have at most 2 decimals$/i,
+    translate: (match) => `${TEMPLATE_SIZE_FIELDS[match[1]] ?? match[1]} admite como máximo 2 decimales.`
+  },
+  {
+    pattern: /^zpl is required$/i,
+    translate: () => 'El código ZPL es obligatorio.'
+  },
+  {
+    pattern: /^zpl cannot be longer than (\d+) characters$/i,
+    translate: (match) => `El código ZPL admite como máximo ${match[1]} caracteres.`
+  },
+  {
+    pattern: /^zpl must contain a label format/i,
+    translate: () => 'El ZPL debe tener una etiqueta: un bloque ^XA … ^XZ.'
+  },
+  {
+    pattern: /^name is required$/i,
+    translate: () => 'El nombre es obligatorio.'
+  },
+  {
+    pattern: /^name cannot be longer than (\d+) characters$/i,
+    translate: (match) => `El nombre admite como máximo ${match[1]} caracteres.`
+  },
+  {
+    pattern: /^description cannot be longer than (\d+) characters$/i,
+    translate: (match) => `La descripción admite como máximo ${match[1]} caracteres.`
+  },
+  {
+    pattern: /^At least one field must be provided$/i,
+    translate: () => 'No hay cambios que guardar.'
+  },
   // --- Subida de imágenes ---
   {
     pattern: /Upload '.+' is still processing/i,
@@ -218,16 +315,17 @@ export function getApiErrorMessage(err: HttpErrorResponse, fallback: string): st
 }
 
 /**
- * Como getApiErrorMessage, pero separa los problemas que la exportación junta con "; " y
- * traduce cada uno. Solo se parte donde empieza el problema de otra hoja ("; Products: …"):
- * algunos mensajes llevan "; " dentro (nombre repetido, colisión de SKU).
+ * Como getApiErrorMessage, pero separa los problemas que la API junta con "; " (exportación y
+ * plantillas de etiqueta) y traduce cada uno. Solo se parte donde empieza otro problema conocido
+ * ("; Products: …", "; Unknown placeholder…"): algunos mensajes llevan "; " dentro (nombre
+ * repetido, colisión de SKU).
  */
 export function getApiErrorList(err: HttpErrorResponse, fallback: string): string[] {
   const raw = getRawMessage(err);
   if (!raw) return [fallback];
 
   return raw
-    .split(EXPORT_PROBLEM_SEPARATOR)
+    .split(PROBLEM_SEPARATOR)
     .map(part => part.trim())
     .filter(part => part.length > 0)
     .map(part => translateMessage(part) ?? part);
